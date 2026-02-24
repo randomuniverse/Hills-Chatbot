@@ -72,8 +72,8 @@ export default function App() {
 
     if (handleContextInput(txt)) return;
 
-    const noTextSteps = ["PARSING","AUTH_PROMPT","PET_TYPE","BREED","AGE","BODY","LOADING","DONE"];
-    if (step !== "START" && noTextSteps.includes(step)) {
+    const fallbackSteps = ["PARSING","CONFIRM_PARSE","AUTH_PROMPT","PET_TYPE","BREED","AGE","BODY","LOADING","DONE","CONFIRM"];
+    if (step !== "START" && fallbackSteps.includes(step)) {
       try {
         const res = await fetch("/api/chat-fallback", {
           method:"POST",

@@ -37,7 +37,8 @@ body {
 }
 
 .app {
-  width: 100%;
+  width: 520px;
+  min-width: 520px;
   max-width: 520px;
   height: 100svh;
   max-height: 100svh;
@@ -46,6 +47,14 @@ body {
   background: var(--white);
   box-shadow: 0 0 48px rgba(15,61,114,0.12);
   overflow: hidden;
+}
+
+@media (max-width: 540px) {
+  .app {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+  }
 }
 
 .header {
