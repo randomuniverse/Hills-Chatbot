@@ -560,7 +560,7 @@ export default function App() {
     );
   }
 
-  const [chatOpen, setChatOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(true);
 
   return (
     <div className="demo-wrapper">
@@ -575,6 +575,7 @@ export default function App() {
       )}
 
       <div className={`app ${chatOpen ? "chat-open" : "chat-closed"}`}>
+      <button className="chat-close-btn" onClick={() => setChatOpen(false)}>✕</button>
       <header className="header">
         <div className="header-inner">
           <img className="logo-icon" src="/bot-logo.png" alt="Pet Life Planner" />
@@ -582,7 +583,6 @@ export default function App() {
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">맞춤 사료 추천</div>
           </div>
-          <button className="header-close" onClick={() => setChatOpen(false)}>✕</button>
         </div>
       </header>
 
@@ -666,10 +666,10 @@ export default function App() {
               <span>베스트 제품: 가장 인기 있는 힐스 제품들입니다.</span><span className="quick-arrow">→</span>
             </a>
             <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>신제품: 과학으로 설계된 새로운 힐스 제품을 만나보세요!</span><span className="quick-arrow">→</span>
+              <span>신제품: 과학으로 설계된 새로운 힐스 제품!</span><span className="quick-arrow">→</span>
             </a>
             <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>힐스 공식 브랜드 스토어 바로 가기</span><span className="quick-arrow">→</span>
+              <span>힐스 공식 브랜드 스토어</span><span className="quick-arrow">→</span>
             </a>
             <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
               <span>제품 추천 받기</span><span className="quick-arrow">→</span>
