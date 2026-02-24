@@ -206,20 +206,26 @@ export default function App() {
 
   function handlePetType(type) {
     addUser(type==="dog"?"🐶 강아지":"🐱 고양이");
+    const updated = {...dataRef.current, petType:type};
     setData(p=>({...p, petType:type}));
-    addBot(`${type==="dog"?"강아지":"고양이"} 품종을 선택해주세요.`, "BREED");
+    dataRef.current = updated;
+    setTimeout(() => goToNextStep(updated), 400);
   }
 
   function handleBreed(breed) {
     addUser(breed);
+    const updated = {...dataRef.current, breed};
     setData(p=>({...p, breed}));
-    addBot("나이대를 알려주세요.", "AGE");
+    dataRef.current = updated;
+    setTimeout(() => goToNextStep(updated), 400);
   }
 
   function handleAge(cat, label) {
     addUser(label);
+    const updated = {...dataRef.current, ageCategory:cat};
     setData(p=>({...p, ageCategory:cat}));
-    addBot("체중을 입력해주세요. (kg)", "WEIGHT");
+    dataRef.current = updated;
+    setTimeout(() => goToNextStep(updated), 400);
   }
 
   function handleWeight() {
@@ -227,21 +233,27 @@ export default function App() {
     if (!w||w<=0||w>150) return;
     addUser(`${w} kg`);
     setInputVal("");
+    const updated = {...dataRef.current, weight:w};
     setData(p=>({...p, weight:w}));
-    addBot("체형 상태는 어떤가요?", "BODY");
+    dataRef.current = updated;
+    setTimeout(() => goToNextStep(updated), 400);
   }
 
   function handleWeightUnknown() {
     addUser("모름");
     setInputVal("");
+    const updated = {...dataRef.current, weight:null};
     setData(p=>({...p, weight:null}));
-    addBot("괜찮아요! 대신 체형을 보고 판단해볼게요.\n아래에서 가장 가까운 체형을 선택해주세요.", "BODY");
+    dataRef.current = updated;
+    setTimeout(() => goToNextStep(updated), 400);
   }
 
   function handleBody(val, label) {
     addUser(label);
+    const updated = {...dataRef.current, bodyCondition:val};
     setData(p=>({...p, bodyCondition:val}));
-    if (data.healthConcerns?.length) {
+    dataRef.current = updated;
+    if (updated.healthConcerns?.length) {
       addBot("건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요.", "CONCERNS");
     } else {
       addBot("건강 관련 고민이 있으신가요?\n버튼으로 선택하시거나 직접 입력해도 돼요.", "CONCERNS");
