@@ -5,6 +5,10 @@ from pydantic import BaseModel
 from typing import Optional
 import anthropic
 from supabase import create_client
+from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -95,21 +99,32 @@ async def parse_intent(req: IntentRequest):
             '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
             '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
             '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
-            '  "concerns": ["소화기계","피부 관리" 등 해당 항목들],\n'
+            '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
             '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
             '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
             "}\n\n"
             "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
             f"concerns 가능 값(강아지): {', '.join(get_concerns('dog'))}\n"
             f"concerns 가능 값(고양이): {', '.join(get_concerns('cat'))}\n"
-            "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
+            "\n★ 중요 규칙:\n"
+            "1. concerns에는 반드시 위 '가능 값' 목록에 있는 정확한 문자열만 사용하세요. '암 환자 지원', '응급 관리' 등 목록에 없는 값을 절대 만들지 마세요.\n"
+            "   - 암/종양 진단 → concerns는 빈 배열[]로 두고, sympathy_msg에서 수의사 상담을 강력히 권고하세요.\n"
+            "   - 사료를 안 먹음/기호성 문제/입맛 → concerns를 빈 배열로 두고, sympathy_msg에서 기호성 문제에 공감하세요.\n"
+            "2. 당뇨, 신장질환, 암, 방광결석 등 진단받은 질환이 언급되면 sympathy_msg에 '수의사와 상담 후 처방식을 선택하시는 것이 중요합니다'를 반드시 포함하세요.\n"
+            "3. 보호자의 요청과 실제 상황이 모순될 때 (예: 2살인데 노령견 사료 요청) sympathy_msg에서 나이에 맞는 사료가 더 적합하다고 부드럽게 교정해주세요.\n"
+            "4. '갓 태어난', '신생아', '생후 며칠' 등 생후 4주 미만 동물은 사료를 먹을 수 없습니다. is_relevant=true로 두되, concerns=[]로 하고 sympathy_msg에 '아직 사료를 먹기 어려운 시기예요. 어미의 모유 수유가 가장 중요하며, 어려운 경우 전용 분유를 사용해주세요. 수의사와 상담을 권장드립니다.'라고 안내하세요.\n"
+            "\nsympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
             "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
         )}]
     )
     try:
         raw = resp.content[0].text.strip()
         if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        return json.loads(raw)
+        data = json.loads(raw)
+        # DB에 있는 카테고리만 허용 (허구 카테고리 필터링)
+        valid = set(get_concerns("dog")) | set(get_concerns("cat"))
+        data["concerns"] = [c for c in data.get("concerns", []) if c in valid]
+        return data
     except (json.JSONDecodeError, IndexError, KeyError):
         return {"is_relevant": True, "pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
 
@@ -164,6 +179,7 @@ async def chat_fallback(req: ChatFallbackRequest):
             "보호자의 메시지를 맥락에 맞게 이해하세요. 예를 들어:\n"
             "- '이미 힐스 사료를 먹이고 있는데 더 잘 맞는 걸 찾고 싶다' → 공감하고 추천 진행을 안내\n"
             "- '네', '응', '좋아' 같은 긍정 → 현재 단계에 맞는 진행 안내\n"
+            "- 사진/이미지 전송 요청 → '죄송합니다, 현재 이미지 분석 기능은 지원하지 않아요 📷 대신 텍스트로 반려동물의 상태나 증상을 설명해주시면 맞춤 추천을 도와드릴게요!'\n"
             "- 반려동물/사료와 전혀 관련 없는 이야기 → '힐스 펫 플래너는 맞춤 사료 추천에 특화되어 있어요! 다른 궁금한 점이 있으신가요?'\n"
             "반말이나 존댓말 모두 자연스럽게 대응하며, 항상 친절하고 짧게(1~3문장) 한국어로 답하세요. "
             "가능하면 현재 진행 단계로 돌아갈 수 있도록 자연스럽게 유도하세요."
