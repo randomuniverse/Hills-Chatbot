@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 const DOG_BREEDS = ["믹스견","말티즈","푸들","시츄","포메라니안","치와와","비숑프리제","요크셔테리어","닥스훈트","웰시코기","비글","골든리트리버","래브라도","보더콜리","허스키","진돗개","삽살개","기타"];
 const CAT_BREEDS = ["믹스묘","코리안숏헤어","페르시안","메인쿤","브리티시숏헤어","스코티시폴드","러시안블루","시암","랙돌","아비시니안","기타"];
-const DOG_CONCERNS = ["소화기계","체중 관리","관절 관리","피부 관리","신장 관리","구강 관리","없음"];
-const CAT_CONCERNS = ["소화기계","체중 관리","비뇨기계","피부 관리","신장 관리","헤어볼","없음"];
+const DOG_CONCERNS = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리","없음"];
+const CAT_CONCERNS = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리","없음"];
 
 const STEP_PROGRESS = {
   IDLE:0, START:5, PARSING:10, CONFIRM_PARSE:15,
@@ -476,11 +476,18 @@ export default function App() {
               <div className="card-brand">{product.brand}</div>
             </div>
           </div>
+          <div className="card-meta">
+            {product.food_form && <span className="meta-item">{product.food_form}</span>}
+            {product.flavor && <span className="meta-item">{product.flavor}맛</span>}
+            {product.is_activbiome && <span className="meta-item activbiome">액티브바이옴+</span>}
+            {product.product_line && <span className="meta-item">{product.product_line}</span>}
+          </div>
           {(product.health_benefits||[]).length>0 && (
             <div className="card-tags">
               {product.health_benefits.slice(0,4).map(t=><span key={t} className="tag">{t}</span>)}
             </div>
           )}
+          {product.description && <div className="card-desc">{product.description}</div>}
           {product.reasoning && <div className="card-reason">{product.reasoning}</div>}
           {product.product_url && (
             <a href={product.product_url} target="_blank" rel="noreferrer" className="card-link">

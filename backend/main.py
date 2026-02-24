@@ -58,7 +58,8 @@ async def parse_intent(req: IntentRequest):
             '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
             "}\n\n"
             "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
-            "concerns 가능 값: 소화기계, 체중 관리, 관절 관리, 피부 관리, 신장 관리, 구강 관리, 비뇨기계, 헤어볼\n"
+            "concerns 가능 값(강아지): 소화기 관리, 체중 관리, 관절 관리, 피부 건강, 신장 관리, 치아 관리, 요로계 관리, 식이 민감성, 심장 관리, 간 관리, 혈당, 노령 관리\n"
+            "concerns 가능 값(고양이): 소화기 관리, 체중 관리, 요로계 관리, 피부 건강, 신장 관리, 헤어볼, 치아 관리, 식이 민감성, 갑상선 관리, 실내 생활, 혈당, 노령 관리\n"
             "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
             "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
         )}]
@@ -72,8 +73,8 @@ async def parse_intent(req: IntentRequest):
 
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
-    dog_cats = ["소화기계","체중 관리","관절 관리","피부 관리","신장 관리","구강 관리"]
-    cat_cats = ["소화기계","체중 관리","비뇨기계","피부 관리","신장 관리","헤어볼"]
+    dog_cats = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리"]
+    cat_cats = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리"]
     categories = dog_cats if req.pet_type=="dog" else cat_cats
 
     resp = claude.messages.create(
@@ -173,22 +174,26 @@ async def parse_special(req: ParseSpecialRequest):
     except (json.JSONDecodeError, IndexError, KeyError):
         return {"is_pregnant": False, "is_nursing": False, "has_medication": False, "force_rx": False, "add_concerns": [], "override_stage": None, "vet_consult_required": False, "summary": ""}
 
-def normalize_stage(stage):
-    if stage=="puppy":  return ["puppy"]
+def normalize_stage(stage, pet_type="dog"):
+    young_stages = ["puppy", "kitten"]
+    if stage in ("puppy", "kitten"):
+        return ["kitten"] if pet_type == "cat" else ["puppy"]
     if stage=="adult":  return ["adult"]
     return ["senior7","senior11","adult"]
 
-def filter_by_stage(rows, life_stage, special):
+def filter_by_stage(rows, life_stage, special, pet_type="dog"):
     if not rows:
         return rows
+    young_stages = ["puppy", "kitten"]
     if special and (special.get("is_pregnant") or special.get("is_nursing")):
-        puppy_products = [p for p in rows if p.get("life_stage") == "puppy"]
-        if puppy_products:
-            return puppy_products
+        young_products = [p for p in rows if p.get("life_stage") in young_stages]
+        if young_products:
+            return young_products
     if life_stage in ("senior7", "senior11"):
-        rows = [p for p in rows if p.get("life_stage") != "puppy"]
-    if life_stage == "puppy":
-        rows = [p for p in rows if p.get("life_stage") == "puppy"]
+        rows = [p for p in rows if p.get("life_stage") not in young_stages]
+    if life_stage in young_stages:
+        target = "kitten" if pet_type == "cat" else "puppy"
+        rows = [p for p in rows if p.get("life_stage") == target]
     return rows
 
 @app.post("/api/recommend")
@@ -209,7 +214,7 @@ async def recommend(req: RecommendRequest):
     if special and special.get("override_stage"):
         effective_stage = special["override_stage"]
 
-    stages = normalize_stage(effective_stage)
+    stages = normalize_stage(effective_stage, req.pet_type)
     query = supabase.table("products").select("*") \
         .eq("pet_type", req.pet_type).in_("life_stage", stages)
     if req.size != "all":
@@ -219,7 +224,7 @@ async def recommend(req: RecommendRequest):
     if not rows:
         raise HTTPException(404, "추천 가능한 제품이 없습니다.")
 
-    rows = filter_by_stage(rows, effective_stage, special)
+    rows = filter_by_stage(rows, effective_stage, special, req.pet_type)
 
     all_concerns = list(req.health_concerns)
     if special and special.get("add_concerns"):
@@ -243,8 +248,12 @@ async def recommend(req: RecommendRequest):
     summary = "\n".join([
         f"[{i+1}] {p['product_name_kr']} ({p.get('brand','')}) "
         f"| 효능: {', '.join(p.get('health_benefits') or [])} "
-        f"| 처방식: {'예' if p.get('is_prescription') else '아니오'} "
-        f"| {(p.get('description') or '')[:80]}"
+        f"| 형태: {p.get('food_form','')}"
+        f"{' | 맛: '+p['flavor'] if p.get('flavor') else ''}"
+        f"{'  | 액티브바이옴+' if p.get('is_activbiome') else ''}"
+        f"{' | 라인: '+p['product_line'] if p.get('product_line') else ''}"
+        f" | 처방식: {'예' if p.get('is_prescription') else '아니오'} "
+        f"| {(p.get('description') or '')[:120]}"
         for i,p in enumerate(top)
     ])
 
@@ -298,6 +307,11 @@ Hills 제품 후보:
             "is_prescription": p.get("is_prescription",False),
             "product_url": p.get("product_url",""),
             "image_url": p.get("image_url",""),
+            "food_form": p.get("food_form",""),
+            "flavor": p.get("flavor",""),
+            "is_activbiome": p.get("is_activbiome",False),
+            "product_line": p.get("product_line",""),
+            "description": p.get("description",""),
             "reasoning": reasons[i] if i<len(reasons) else "",
         } for i,p in enumerate(selected)],
         "overall_reasoning": ai.get("overall_reasoning",""),
