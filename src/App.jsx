@@ -20,7 +20,7 @@ function buildSummary(d) {
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n\n<strong>Hills Pet Nutrition</strong> 맞춤 사료 추천 서비스입니다.\n반려동물에 대해 고민이 있으시면 편하게 말씀해 주세요."}]);
+  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료 추천 서비스입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
   const [step, setStep]           = useState("START");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
