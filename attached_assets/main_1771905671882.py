@@ -12,6 +12,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
 claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
+# ── 스키마 ─────────────────────────────────────────────
 class IntentRequest(BaseModel):
     text: str
 
@@ -28,8 +29,10 @@ class RecommendRequest(BaseModel):
     breed: Optional[str] = None
     pet_name: Optional[str] = None
 
+# ── 1. 자유 입력 의도 파악 ──────────────────────────────
 @app.post("/api/parse-intent")
 async def parse_intent(req: IntentRequest):
+    """사용자의 자유 입력에서 반려동물 종류, 건강 고민, 공감 메시지를 추출"""
     resp = claude.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=512,
@@ -51,13 +54,11 @@ async def parse_intent(req: IntentRequest):
             "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'"
         )}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        return json.loads(raw)
-    except (json.JSONDecodeError, IndexError, KeyError):
-        return {"pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    return json.loads(raw)
 
+# ── 2. 건강 고민 분류 ──────────────────────────────────
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
     dog_cats = ["소화기계","체중 관리","관절 관리","피부 관리","신장 관리","구강 관리"]
@@ -74,14 +75,12 @@ async def classify_concerns(req: ClassifyRequest):
             f"해당 카테고리를 JSON으로: {{\"concerns\": [...]}}"
         )}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        data = json.loads(raw)
-        return {"concerns": [c for c in data.get("concerns",[]) if c in categories]}
-    except (json.JSONDecodeError, IndexError, KeyError):
-        return {"concerns": []}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    data = json.loads(raw)
+    return {"concerns": [c for c in data.get("concerns",[]) if c in categories]}
 
+# ── 3. 추천 ────────────────────────────────────────────
 def normalize_stage(stage):
     if stage=="puppy":  return ["puppy"]
     if stage=="adult":  return ["adult"]
@@ -141,12 +140,9 @@ Hills 제품 후보:
         system="Hills Pet Nutrition 공식 영양 상담사. 처방식은 수의사 상담 필수 안내. JSON으로만 응답.",
         messages=[{"role":"user","content":prompt}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        ai = json.loads(raw)
-    except (json.JSONDecodeError, IndexError, KeyError):
-        ai = {"selected_indices": [1], "overall_reasoning": "", "individual_reasons": [], "prescription_note": None}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    ai = json.loads(raw)
 
     selected = [top[i-1] for i in ai.get("selected_indices",[1]) if 1<=i<=len(top)]
     reasons  = ai.get("individual_reasons",[])
