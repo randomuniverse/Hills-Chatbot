@@ -221,23 +221,13 @@ export default function App() {
     setTimeout(()=>addBot("안녕하세요! 👋\n\n<strong>Hills Pet Nutrition</strong> 맞춤 사료 추천 서비스입니다.\n반려동물에 대해 고민이 있으시면 편하게 말씀해 주세요.","START"),400);
   }
 
+  function handleStartRecommendBtn() {
+    addUser("맞춤 사료 추천받기");
+    addBot("시작해볼게요! 먼저 회원 여부를 확인할게요.", "AUTH_PROMPT", 400);
+  }
+
   function renderButtons() {
-    if (step==="START") return (
-      <div className="main-input-wrap">
-        <textarea className="main-free-input"
-          placeholder="예) 강아지 눈물 자국 때문에 고민이에요&#10;예) 고양이가 살이 너무 쪄서요..."
-          value={mainInput}
-          onChange={e=>setMainInput(e.target.value)}
-          onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleMainInput();}}}
-        />
-        <button className="main-send-btn" onClick={handleMainInput}>전송하기 →</button>
-        <div className="or-divider"><span className="or-text">또는</span></div>
-        <button className="choice-btn primary" onClick={()=>{
-          addUser("맞춤 사료 추천받기");
-          addBot("시작해볼게요! 먼저 회원 여부를 확인할게요.", "AUTH_PROMPT", 400);
-        }}>🐾 맞춤 사료 추천받기</button>
-      </div>
-    );
+    if (step==="START") return null;
 
     if (step==="CONFIRM_PARSE") return (
       <div className="btn-row">
@@ -412,6 +402,14 @@ export default function App() {
           </div>
         ))}
 
+        {step==="START"&&!isTyping&&messages.length>0&&(
+          <div className="bubble-wrap user">
+            <button className="inline-action-btn" onClick={handleStartRecommendBtn}>
+              맞춤 사료 추천받기
+            </button>
+          </div>
+        )}
+
         {isTyping&&(
           <div className="bubble-wrap bot">
             <img className="avatar" src="/bot-logo.png" alt="bot" />
@@ -453,7 +451,18 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        {step!=="LOADING"&&renderButtons()}
+        {step!=="LOADING"&&step!=="START"&&renderButtons()}
+        {step!=="LOADING"&&step!=="DONE"&&(
+          <div className="input-row" style={{marginTop: step==="START"?0:8}}>
+            <input className="text-input" type="text"
+              placeholder="고민을 입력해주세요..."
+              value={mainInput}
+              onChange={e=>setMainInput(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleMainInput();}}}
+            />
+            <button className="send-btn" onClick={handleMainInput}>→</button>
+          </div>
+        )}
       </footer>
     </div>
   );
