@@ -46,15 +46,19 @@ async def parse_intent(req: IntentRequest):
         ),
         messages=[{"role":"user","content":(
             f"보호자 메시지: \"{req.text}\"\n\n"
+            "먼저 이 메시지가 반려동물, 사료, 건강, 펫 관련 주제인지 판단하세요.\n"
+            "전혀 관련 없는 메시지(욕설, 장난, 스팸, 무관한 주제)라면 is_relevant를 false로 설정하세요.\n\n"
             "아래 JSON 형식으로만 응답:\n"
             "{\n"
+            '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
             '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
             '  "concerns": ["소화기계","피부 관리" 등 해당 항목들],\n'
             '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
             '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
             "}\n\n"
             "concerns 가능 값: 소화기계, 체중 관리, 관절 관리, 피부 관리, 신장 관리, 구강 관리, 비뇨기계, 헤어볼\n"
-            "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'"
+            "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
+            "is_relevant가 false인 경우: pet_type=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
         )}]
     )
     try:
@@ -62,7 +66,7 @@ async def parse_intent(req: IntentRequest):
         if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
         return json.loads(raw)
     except (json.JSONDecodeError, IndexError, KeyError):
-        return {"pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
+        return {"is_relevant": True, "pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
 
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):

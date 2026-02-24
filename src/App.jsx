@@ -100,6 +100,20 @@ export default function App() {
       });
       const parsed = await res.json();
 
+      if (parsed.is_relevant === false) {
+        setStep("START");
+        addBot(
+          "안녕하세요! 저는 **Hill's Pet Planner** 맞춤 사료 추천 봇이에요. 🐾\n\n" +
+          "아래와 같은 도움을 드릴 수 있어요:\n" +
+          "• 반려동물 건강 고민에 맞는 **맞춤 사료 추천**\n" +
+          "• 강아지/고양이 **영양 상담**\n" +
+          "• Hill's 제품 정보 안내\n\n" +
+          "반려동물에 대해 궁금한 점이 있으시면 편하게 말씀해 주세요!",
+          "START", 600
+        );
+        return;
+      }
+
       setData(p=>({...p, petType: parsed.pet_type, healthConcerns: parsed.concerns||[] }));
 
       const sympathyMsg = parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.";
