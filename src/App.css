@@ -93,18 +93,18 @@ body {
 
 .app {
   position: fixed;
-  bottom: 28px;
+  bottom: 100px;
   right: 28px;
   z-index: 999;
   width: 400px;
   max-width: 400px;
-  height: 620px;
-  max-height: calc(100vh - 56px);
+  height: 580px;
+  max-height: calc(100vh - 116px);
   display: flex;
   flex-direction: column;
   background: var(--white);
   box-shadow: 0 8px 40px rgba(15,61,114,0.25);
-  overflow: visible;
+  overflow: hidden;
   border-radius: 16px;
   transition: opacity 0.25s, transform 0.25s;
 }
@@ -141,27 +141,26 @@ body {
 }
 
 .chat-bottom-close {
-  position: absolute;
-  bottom: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  width: 36px;
-  height: 36px;
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1001;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  border: 2px solid var(--white);
+  border: none;
   background: var(--blue);
   color: var(--white);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 3px 12px rgba(15,61,114,0.3);
+  box-shadow: 0 4px 20px rgba(15,61,114,0.35);
   transition: transform 0.2s, background 0.15s;
 }
 
 .chat-bottom-close:hover {
-  transform: translateX(-50%) scale(1.1);
+  transform: scale(1.08);
   background: var(--blue-dark);
 }
 
@@ -249,8 +248,9 @@ body {
 .header-badge:hover { background: rgba(255,255,255,0.25); }
 
 .progress-bar {
-  height: 3px;
+  height: 0px;
   background: var(--gray-200);
+  display: none;
 }
 .progress-fill {
   height: 100%;
