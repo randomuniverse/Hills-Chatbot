@@ -403,9 +403,18 @@ export default function App() {
         ))}
 
         {step==="START"&&!isTyping&&messages.length>0&&(
-          <div className="bubble-wrap user">
-            <button className="inline-action-btn" onClick={handleStartRecommendBtn}>
-              맞춤 사료 추천받기
+          <div className="quick-options">
+            <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
+              <span>베스트</span><span className="quick-arrow">→</span>
+            </a>
+            <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
+              <span>신제품</span><span className="quick-arrow">→</span>
+            </a>
+            <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
+              <span>브랜드 스토어</span><span className="quick-arrow">→</span>
+            </a>
+            <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
+              <span>제품 추천 받기</span><span className="quick-arrow">→</span>
             </button>
           </div>
         )}
@@ -455,7 +464,7 @@ export default function App() {
         {step!=="LOADING"&&step!=="DONE"&&(
           <div className="input-row" style={{marginTop: step==="START"?0:8}}>
             <input className="text-input" type="text"
-              placeholder="고민을 입력해주세요..."
+              placeholder="힐스와 상담하기"
               value={mainInput}
               onChange={e=>setMainInput(e.target.value)}
               onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleMainInput();}}}

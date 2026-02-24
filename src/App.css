@@ -499,20 +499,50 @@ body {
 }
 .or-text { font-size: 11px; color: var(--gray-500); font-weight: 500; }
 
-.inline-action-btn {
+.quick-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideUp 0.3s ease;
+  padding: 0 4px;
+}
+.quick-option-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
   background: var(--white);
-  border: 1.5px solid var(--text);
-  color: var(--text);
-  padding: 10px 20px;
-  border-radius: 40px;
-  font-size: 13.5px;
-  font-weight: 600;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
   font-family: 'Noto Sans KR', sans-serif;
+  color: var(--text);
+  text-decoration: none;
   cursor: pointer;
   transition: all 0.18s;
   box-shadow: var(--shadow-xs);
 }
-.inline-action-btn:hover {
-  background: var(--gray-100);
+.quick-option-bar:hover {
+  border-color: var(--blue);
+  color: var(--blue);
   box-shadow: var(--shadow-sm);
+}
+.quick-option-bar.highlight {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: var(--white);
+  font-weight: 700;
+  box-shadow: var(--shadow-blue);
+}
+.quick-option-bar.highlight:hover {
+  background: var(--blue-dark);
+  color: var(--white);
+}
+.quick-arrow {
+  font-size: 15px;
+  opacity: 0.6;
+}
+.quick-option-bar.highlight .quick-arrow {
+  opacity: 0.85;
 }
