@@ -55,6 +55,11 @@ export default function App() {
     if (!txt) return;
     addUser(txt);
     setMainInput("");
+
+    if (step !== "START" && step !== "IDLE") {
+      return;
+    }
+
     setStep("PARSING");
 
     try {
@@ -67,17 +72,22 @@ export default function App() {
 
       setData(p=>({...p, petType: parsed.pet_type, healthConcerns: parsed.concerns||[] }));
 
-      addBot(parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.", "CONFIRM_PARSE", 600);
-
+      const sympathyMsg = parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.";
+      setIsTyping(true);
       setTimeout(() => {
-        const chips = [];
-        if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
-        if (parsed.concerns?.length) chips.push(...parsed.concerns);
-        const chipHtml = chips.length
-          ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
-          : "";
-        addBot(`파악한 내용이에요.${chipHtml}\n\n맞춤 추천을 시작할까요?`, "CONFIRM_PARSE");
-      }, 1900);
+        setIsTyping(false);
+        setMessages(p=>[...p,{role:"bot",text:sympathyMsg}]);
+
+        setTimeout(() => {
+          const chips = [];
+          if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
+          if (parsed.concerns?.length) chips.push(...parsed.concerns);
+          const chipHtml = chips.length
+            ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
+            : "";
+          addBot(`파악한 내용이에요.${chipHtml}\n\n맞춤 추천을 시작할까요?`, "CONFIRM_PARSE");
+        }, 800);
+      }, 900);
 
     } catch {
       addBot("말씀 잘 들었어요! 몇 가지 정보를 더 알려주시면 정확하게 추천해드릴게요.", "PET_TYPE", 600);
