@@ -72,3 +72,8 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - IME fix: Korean input double character prevention on Enter key
 - Context-aware chat: short responses (네/응/좋아) understood based on current step
 - Off-topic fallback: Claude-powered graceful handling of unrelated messages
+- Supabase DB sync: concern names aligned to DB health_benefits (소화기 관리, 피부 건강, 치아 관리, 요로계 관리 등)
+- Full DB category coverage: 강아지 12개, 고양이 12개 건강고민 카테고리 (식이 민감성, 심장 관리, 간 관리, 갑상선 관리, 실내 생활, 혈당, 노령 관리 추가)
+- Kitten life_stage fix: 고양이 1살 미만 → 'kitten' (DB 일치), 강아지는 'puppy' 유지
+- Enhanced product cards: food_form(건식/습식), flavor(맛), is_activbiome, product_line, description 표시
+- Supabase products table: 116개 제품 (dog 63, cat 53), 브랜드 2개 (사이언스 다이어트, 프리스크립션 다이어트)
