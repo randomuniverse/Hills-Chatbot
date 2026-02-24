@@ -129,6 +129,14 @@ export default function App() {
         return;
       }
 
+      const hasInfo = parsed.pet_type || parsed.age_category || (parsed.concerns && parsed.concerns.length > 0);
+      if (!hasInfo) {
+        setStep("START");
+        const greeting = parsed.sympathy_msg || "안녕하세요! 반려동물 영양 상담을 위해 찾아주셔서 감사합니다 😊";
+        addBot(greeting + "\n\n궁금한 점이 있으시면 편하게 말씀해 주세요!\n아래 **제품 추천 받기** 버튼을 눌러 시작하실 수도 있어요.", "START", 600);
+        return;
+      }
+
       const newData = { petType: parsed.pet_type, healthConcerns: parsed.concerns||[] };
       if (parsed.age_category) newData.ageCategory = parsed.age_category;
       setData(p=>({...p, ...newData}));
