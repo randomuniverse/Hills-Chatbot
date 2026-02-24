@@ -400,7 +400,7 @@ export default function App() {
 
         {messages.map((m,i)=>(
           <div key={i} className={`bubble-wrap ${m.role}`}>
-            {m.role==="bot"&&<img className="avatar" src="/bot-logo.png" alt="bot" />}
+            {m.role==="bot"&&<img className="avatar" src="/bot-avatar.png" alt="bot" />}
             <div className={`bubble ${m.role}`}>
               <BubbleText text={m.text}/>
             </div>
@@ -409,7 +409,7 @@ export default function App() {
 
         {isTyping&&(
           <div className="bubble-wrap bot">
-            <img className="avatar" src="/bot-logo.png" alt="bot" />
+            <img className="avatar" src="/bot-avatar.png" alt="bot" />
             <div className="bubble bot typing"><span/><span/><span/></div>
           </div>
         )}
