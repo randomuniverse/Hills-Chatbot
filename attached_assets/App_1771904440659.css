@@ -30,9 +30,11 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
+  /* subtle linen texture */
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23FAF7F2'/%3E%3Ccircle cx='1' cy='1' r='0.6' fill='%23EDE6D8' opacity='0.5'/%3E%3C/svg%3E");
 }
 
+/* ══ LAYOUT ══════════════════════════════════════════════ */
 .app {
   width: 100%;
   max-width: 460px;
@@ -44,6 +46,7 @@ body {
   box-shadow: 0 0 60px rgba(13,27,42,0.10);
 }
 
+/* ══ HEADER ══════════════════════════════════════════════ */
 .header {
   background: var(--navy);
   padding: 0 24px;
@@ -97,6 +100,7 @@ body {
   margin-top: 1px;
 }
 
+/* ══ PROGRESS BAR ════════════════════════════════════════ */
 .progress-bar {
   height: 2px;
   background: rgba(201,168,76,0.15);
@@ -109,6 +113,7 @@ body {
   transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
 }
 
+/* ══ CHAT AREA ═══════════════════════════════════════════ */
 .chat-area {
   flex: 1;
   overflow-y: auto;
@@ -122,6 +127,7 @@ body {
 .chat-area::-webkit-scrollbar-track { background: transparent; }
 .chat-area::-webkit-scrollbar-thumb { background: var(--cream-dark); border-radius: 4px; }
 
+/* ══ BUBBLES ═════════════════════════════════════════════ */
 .bubble-wrap {
   display: flex;
   align-items: flex-end;
@@ -169,6 +175,7 @@ body {
   box-shadow: var(--shadow-md);
 }
 
+/* typing indicator */
 .bubble.typing {
   padding: 16px 20px;
   display: flex;
@@ -190,6 +197,7 @@ body {
   40% { transform: scale(1.1); opacity: 1; }
 }
 
+/* ══ DATE DIVIDER ════════════════════════════════════════ */
 .divider {
   display: flex;
   align-items: center;
@@ -210,6 +218,7 @@ body {
   font-weight: 500;
 }
 
+/* ══ RESULT CARDS ════════════════════════════════════════ */
 .results-wrap {
   display: flex;
   flex-direction: column;
@@ -364,6 +373,7 @@ body {
   line-height: 1.55;
 }
 
+/* ══ FOOTER / BUTTONS ════════════════════════════════════ */
 .footer {
   padding: 14px 18px 28px;
   background: linear-gradient(to top, var(--cream) 70%, transparent);
@@ -371,6 +381,7 @@ body {
   bottom: 0;
 }
 
+/* row of buttons */
 .btn-row {
   display: flex;
   gap: 10px;
@@ -378,6 +389,7 @@ body {
   flex-wrap: wrap;
 }
 
+/* grid for breeds / concerns */
 .btn-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -476,6 +488,7 @@ body {
   box-shadow: 0 8px 24px rgba(13,27,42,0.28);
 }
 
+/* text inputs */
 .input-row {
   display: flex;
   gap: 8px;
@@ -541,6 +554,7 @@ body {
   color: var(--text-mid);
 }
 
+/* free text area (health concerns) */
 .free-input-wrap {
   margin-top: 4px;
 }

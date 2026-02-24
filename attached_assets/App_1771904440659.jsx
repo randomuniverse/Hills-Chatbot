@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
+// ── 데이터 ────────────────────────────────────────────────
 const DOG_BREEDS = [
   "믹스견","말티즈","푸들","시츄","포메라니안","치와와",
   "비숑프리제","요크셔테리어","닥스훈트","웰시코기",
@@ -17,6 +18,7 @@ const CAT_CONCERNS  = ["소화","체중 관리","헤어볼","피부/모질","요
 const STEPS = ["PET_TYPE","PET_NAME","BREED","AGE","WEIGHT","BODY_CONDITION","HEALTH_CONCERNS","CONFIRM"];
 const STEP_PROGRESS = { PET_TYPE:0, PET_NAME:14, BREED:28, AGE:42, WEIGHT:56, BODY_CONDITION:70, HEALTH_CONCERNS:84, CONFIRM:95, LOADING:98, DONE:100 };
 
+// ── 확인 텍스트 ───────────────────────────────────────────
 function buildConfirm(d) {
   const age = { puppy:"1살 미만", adult:"1~7살", senior7:"7~11살", senior11:"11살 이상" }[d.ageCategory] || "";
   const body = { underweight:"마름", normal:"정상", overweight:"과체중" }[d.bodyCondition] || "";
@@ -37,6 +39,7 @@ export default function App() {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isTyping, results]);
   useEffect(() => { setProgress(STEP_PROGRESS[state.currentStep] || 0); }, [state.currentStep]);
 
+  // 최초 시작
   useEffect(() => {
     setTimeout(() => botSay(
       "안녕하세요 🐾\n\nHills Pet Nutrition 맞춤 영양 상담 서비스입니다.\n반려동물의 정보를 알려주시면 최적의 사료를 추천해드릴게요.",
@@ -57,6 +60,7 @@ export default function App() {
     setMessages(p => [...p, { role: "user", text }]);
   }
 
+  // ── 핸들러 ────────────────────────────────────────────────
   function onPetType(type) {
     userSay(type === "dog" ? "🐶 강아지" : "🐱 고양이");
     setState(p => ({ ...p, petType: type, currentStep: "WAITING" }));
@@ -111,6 +115,7 @@ export default function App() {
   }
 
   async function onConcernsDone() {
+    // freeText가 있으면 Claude로 분류 먼저
     let finalConcerns = selectedConcerns.length ? selectedConcerns : [];
 
     if (freeText.trim()) {
@@ -184,6 +189,7 @@ export default function App() {
     ), 400);
   }
 
+  // ── 버튼 렌더링 ───────────────────────────────────────────
   function renderButtons() {
     const s = state.currentStep;
 
@@ -280,6 +286,7 @@ export default function App() {
     return null;
   }
 
+  // ── 제품 카드 ─────────────────────────────────────────────
   function ProductCard({ product, index }) {
     const ranks = ["BEST MATCH","RECOMMENDED","ALSO GREAT"];
     return (
@@ -318,6 +325,7 @@ export default function App() {
 
   return (
     <div className="app">
+      {/* 헤더 */}
       <header className="header">
         <div className="header-inner">
           <div className="logo-mark">🐾</div>
@@ -328,10 +336,12 @@ export default function App() {
         </div>
       </header>
 
+      {/* 진행 바 */}
       <div className="progress-bar">
         <div className="progress-fill" style={{ width: `${progress}%` }} />
       </div>
 
+      {/* 채팅 영역 */}
       <main className="chat-area">
         {messages.length === 0 && (
           <div className="divider">
@@ -359,6 +369,7 @@ export default function App() {
           </div>
         )}
 
+        {/* 결과 카드 */}
         {results && state.currentStep === "DONE" && (
           <div className="results-wrap">
             {results.products?.map((p, i) => <ProductCard key={i} product={p} index={i} />)}
@@ -377,6 +388,7 @@ export default function App() {
         <div ref={bottomRef} />
       </main>
 
+      {/* 하단 버튼 */}
       <footer className="footer">
         {state.currentStep !== "LOADING" && renderButtons()}
       </footer>

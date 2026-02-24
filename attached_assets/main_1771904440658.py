@@ -16,6 +16,7 @@ ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 claude = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
 
+# ── 스키마 ─────────────────────────────────────────────────
 class RecommendRequest(BaseModel):
     pet_type: str
     life_stage: str
@@ -27,8 +28,9 @@ class RecommendRequest(BaseModel):
 
 class ClassifyRequest(BaseModel):
     text: str
-    pet_type: str
+    pet_type: str   # dog / cat
 
+# ── 자유 입력 → 건강 고민 분류 ───────────────────────────
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
     dog_cats = ["소화", "체중 관리", "관절", "피부/모질", "신장", "치아"]
@@ -53,15 +55,14 @@ async def classify_concerns(req: ClassifyRequest):
             )
         }]
     )
-    try:
-        raw = response.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        data = json.loads(raw)
-        valid = [c for c in data.get("concerns", []) if c in categories]
-        return { "concerns": valid }
-    except (json.JSONDecodeError, IndexError, KeyError):
-        return { "concerns": [] }
+    raw = response.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    data = json.loads(raw)
+    # 유효한 카테고리만 필터
+    valid = [c for c in data.get("concerns", []) if c in categories]
+    return { "concerns": valid }
 
+# ── 추천 ───────────────────────────────────────────────────
 def normalize_stage(stage: str) -> list[str]:
     if stage == "puppy": return ["puppy"]
     if stage == "adult": return ["adult"]
