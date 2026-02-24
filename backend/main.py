@@ -376,10 +376,15 @@ async def recommend(req: RecommendRequest):
 Hills 제품 후보:
 {summary}
 
-최적 1~3개 선택 후 JSON으로만 응답:
+**중요 - 맛/재료 선호**: 특이사항에 맛/재료 선호나 기피가 있으면 반영하세요.
+예: "치킨 싫어함" → 치킨/닭 맛 제품을 피하고, 연어·참치·오리 등 대안 맛 제품을 우선 추천.
+단, 맛이 명시되지 않은 처방식도 대안이 될 수 있습니다.
+기피 맛 제품만 있고 대안이 없으면, 기피 맛이라도 포함하되 individual_reasons에 맛 관련 안내를 추가하세요.
+
+**반드시 2~3개** 선택 후 JSON으로만 응답 (1개만 선택하지 마세요):
 {{
   "selected_indices": [1, 2],
-  "overall_reasoning": "전체 추천 이유 150자 이내 한국어. 특이사항 반영.",
+  "overall_reasoning": "전체 추천 이유 150자 이내 한국어. 특이사항·맛선호 반영.",
   "individual_reasons": ["제품1 이유", "제품2 이유"],
   "prescription_note": "처방식 포함 또는 수의사 상담 필요 시 안내 문구, 없으면 null",
   "special_warning": "임신/수유/약복용 등 특이사항 관련 주의사항, 없으면 null"

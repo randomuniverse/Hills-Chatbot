@@ -31,6 +31,7 @@ export default function App() {
   const [isTyping, setIsTyping]   = useState(false);
   const [results, setResults]     = useState(null);
   const [showSave, setShowSave]   = useState(false);
+  const [selectedSpecial, setSelectedSpecial] = useState([]);
   const [dbConcerns, setDbConcerns] = useState({dog: FALLBACK_DOG, cat: FALLBACK_CAT});
   const bottomRef = useRef(null);
   const dataRef = useRef(data);
@@ -169,23 +170,24 @@ export default function App() {
     return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요." };
   }
 
-  function goToNextStep(currentData) {
+  function goToNextStep(currentData, showSkip=false) {
     const d = currentData || dataRef.current;
     const { step: nextStep, msg } = getNextStep(d);
-    const known = [];
-    if (d.petType) known.push(d.petType==="dog"?"🐶 강아지":"🐱 고양이");
-    if (d.ageCategory) {
-      const ageLabel = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory];
-      if (ageLabel) known.push(ageLabel);
-    }
-    if (d.healthConcerns?.length) known.push(...d.healthConcerns);
 
-    if (known.length > 0 && nextStep !== "CONCERNS") {
-      const skipMsg = `이미 알고 있는 정보는 넘어갈게요! 😊\n${msg}`;
-      addBot(skipMsg, nextStep, 500);
-    } else {
-      addBot(msg, nextStep, 500);
+    if (showSkip) {
+      const known = [];
+      if (d.petType) known.push(d.petType==="dog"?"🐶 강아지":"🐱 고양이");
+      if (d.ageCategory) {
+        const ageLabel = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory];
+        if (ageLabel) known.push(ageLabel);
+      }
+      if (d.healthConcerns?.length) known.push(...d.healthConcerns);
+      if (known.length > 1) {
+        addBot(`이미 파악한 정보가 있어서 빠르게 진행할게요! 😊\n${msg}`, nextStep, 500);
+        return;
+      }
     }
+    addBot(msg, nextStep, 500);
   }
 
   function startRecommend() {
@@ -197,15 +199,15 @@ export default function App() {
     if (choice === "member") {
       addUser("회원으로 계속");
       addBot("반갑습니다! 🙌", null, 400);
-      setTimeout(() => goToNextStep(), 1400);
+      setTimeout(() => goToNextStep(null, true), 1400);
     } else if (choice === "join") {
       addUser("회원 가입 후 진행");
       addBot("회원가입 후에는 추천 결과가 저장돼요! 😊", null, 400);
-      setTimeout(() => goToNextStep(), 1400);
+      setTimeout(() => goToNextStep(null, true), 1400);
     } else {
       addUser("그냥 진행할게요");
       addBot("알겠어요!", null, 300);
-      setTimeout(() => goToNextStep(), 1200);
+      setTimeout(() => goToNextStep(null, true), 1200);
     }
   }
 
@@ -299,19 +301,25 @@ export default function App() {
     setData(newData);
     setSelected([]); setFreeText("");
 
-    addBot("거의 다 왔어요! 마지막으로 한 가지만요.\n\n혹시 특이사항이 있으신가요?\n예: 임신 중, 약 복용 중, 수술 후 회복 중 등", "SPECIAL");
+    addBot("거의 다 왔어요! 마지막으로 한 가지만요.\n\n다음 중 해당 사항이 있으신가요?", "SPECIAL");
+  }
+
+  function toggleSpecialOption(opt) {
+    setSelectedSpecial(p => p.includes(opt) ? p.filter(x=>x!==opt) : [...p, opt]);
   }
 
   function handleSpecial(notes) {
-    const hasNotes = notes && notes.trim();
-    addUser(hasNotes ? notes.trim() : "특이사항 없음");
-    setData(p => ({ ...p, specialNotes: hasNotes ? notes.trim() : "" }));
-    setSpecial("");
+    const combined = [...selectedSpecial, ...(notes&&notes.trim()?[notes.trim()]:[])];
+    const finalNotes = combined.join(", ");
+    const hasNotes = finalNotes.length > 0;
+    addUser(hasNotes ? finalNotes : "특이사항 없음");
+    setData(p => ({ ...p, specialNotes: hasNotes ? finalNotes : "" }));
+    setSpecial(""); setSelectedSpecial([]);
 
-    const newData = { ...data, specialNotes: hasNotes ? notes.trim() : "",
+    const newData = { ...data, specialNotes: hasNotes ? finalNotes : "",
       healthConcerns: data.healthConcerns };
     const summary = buildSummary(newData);
-    addBot(`입력하신 내용을 정리했어요. ✅\n\n${summary}${hasNotes ? `\n특이사항: ${notes.trim()}` : ""}\n\n이대로 맞춤 추천을 받으시겠어요?`, "CONFIRM");
+    addBot(`입력하신 내용을 정리했어요. ✅\n\n${summary}${hasNotes ? `\n특이사항: ${finalNotes}` : ""}\n\n이대로 맞춤 추천을 받으시겠어요?`, "CONFIRM");
   }
 
   async function handleConfirm() {
@@ -350,7 +358,7 @@ export default function App() {
 
   function handleRestart() {
     setMessages([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료 추천 서비스입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
-    setStep("START"); setData({}); setSelected([]);
+    setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
     setResults(null); setShowSave(false);
   }
@@ -448,17 +456,30 @@ export default function App() {
       );
     }
 
-    if (step==="SPECIAL") return (
-      <div className="concerns-wrap">
-        <textarea className="free-input"
-          placeholder="예: 임신 중이에요, 약을 먹고 있어요, 수술 후 회복 중..."
-          value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
-        <div className="btn-row">
-          <button className="next-btn" style={{flex:1}} onClick={()=>handleSpecial(specialNotes)}>다음 →</button>
-          <button className="choice-btn ghost" onClick={()=>handleSpecial("")}>없어요</button>
+    if (step==="SPECIAL") {
+      const specialOpts = ["임신/수유 중","약 복용 중","수술 후 회복 중","알레르기 있음"];
+      return (
+        <div className="concerns-wrap">
+          <div className="btn-grid-2">
+            {specialOpts.map(opt=>(
+              <button key={opt}
+                className={`choice-btn small${selectedSpecial.includes(opt)?" selected":""}`}
+                onClick={()=>toggleSpecialOption(opt)}>{opt}</button>
+            ))}
+          </div>
+          <div className="free-input-wrap">
+            <div className="free-input-label">기타 (맛 선호, 기피 재료 등)</div>
+            <textarea className="free-input"
+              placeholder="예: 치킨 맛 싫어해요, 연어 맛 선호해요..."
+              value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
+          </div>
+          <div className="btn-row">
+            <button className="next-btn" style={{flex:1}} onClick={()=>handleSpecial(specialNotes)}>다음 →</button>
+            <button className="choice-btn ghost" onClick={()=>handleSpecial("")}>없어요</button>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
 
     if (step==="CONFIRM") return (
       <div className="btn-row">
@@ -567,6 +588,16 @@ export default function App() {
           </div>
         )}
 
+        {step==="LOADING"&&!isTyping&&(
+          <div className="loading-animation">
+            <div className="loading-icon-wrap">
+              <span className="loading-magnifier">🔍</span>
+            </div>
+            <div className="loading-label">맞춤 제품을 분석하고 있어요</div>
+            <div className="loading-dots-bar"><span/><span/><span/></div>
+          </div>
+        )}
+
         {results&&step==="DONE"&&(
           <div className="results-wrap">
             {results.products?.map((p,i)=><ProductCard key={i} product={p} index={i}/>)}
@@ -605,16 +636,19 @@ export default function App() {
 
       <footer className="footer">
         {step!=="LOADING"&&step!=="START"&&renderButtons()}
+        {["PET_TYPE","BREED","AGE","WEIGHT","BODY","CONCERNS","SPECIAL","CONFIRM"].includes(step)&&(
+          <button className="restart-link" onClick={handleRestart}>↩ 처음부터 다시 하기</button>
+        )}
         {step==="START"&&!isTyping&&messages.length>0&&(
           <div className="quick-options">
             <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>베스트</span><span className="quick-arrow">→</span>
+              <span>베스트 제품: 가장 인기 있는 힐스 제품들입니다.</span><span className="quick-arrow">→</span>
             </a>
             <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>신제품</span><span className="quick-arrow">→</span>
+              <span>신제품: 과학으로 설계된 새로운 힐스 제품을 만나보세요!</span><span className="quick-arrow">→</span>
             </a>
             <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>브랜드 스토어</span><span className="quick-arrow">→</span>
+              <span>힐스 공식 브랜드 스토어 바로 가기</span><span className="quick-arrow">→</span>
             </a>
             <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
               <span>제품 추천 받기</span><span className="quick-arrow">→</span>
@@ -627,7 +661,7 @@ export default function App() {
               placeholder="힐스와 상담하기"
               value={mainInput}
               onChange={e=>setMainInput(e.target.value)}
-              onKeyDown={e=>{if(e.key==="Enter"&&!e.nativeEvent.isComposing){e.preventDefault();handleMainInput();}}}
+              onKeyDown={e=>{if(e.key==="Enter"&&(e.shiftKey||!e.nativeEvent.isComposing)){e.preventDefault();handleMainInput();}}}
               onCompositionEnd={e=>{}}
             />
             <button className="send-btn" onClick={handleMainInput}>→</button>
