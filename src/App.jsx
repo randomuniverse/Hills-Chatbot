@@ -560,8 +560,21 @@ export default function App() {
     );
   }
 
+  const [chatOpen, setChatOpen] = useState(false);
+
   return (
-    <div className="app">
+    <div className="demo-wrapper">
+      <div className="demo-bg">
+        <img src="/hills-site-bg.png" alt="Hills Pet Nutrition" className="demo-bg-img" />
+      </div>
+
+      {!chatOpen && (
+        <button className="chat-fab" onClick={() => setChatOpen(true)}>
+          <img src="/bot-avatar.png" alt="chat" className="chat-fab-icon" />
+        </button>
+      )}
+
+      <div className={`app ${chatOpen ? "chat-open" : "chat-closed"}`}>
       <header className="header">
         <div className="header-inner">
           <img className="logo-icon" src="/bot-logo.png" alt="Pet Life Planner" />
@@ -569,7 +582,7 @@ export default function App() {
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">맞춤 사료 추천</div>
           </div>
-          <button className="header-badge" onClick={()=>alert("로그인 기능은 준비 중이에요!")}>회원 로그인</button>
+          <button className="header-close" onClick={() => setChatOpen(false)}>✕</button>
         </div>
       </header>
 
@@ -676,6 +689,7 @@ export default function App() {
           </div>
         )}
       </footer>
+    </div>
     </div>
   );
 }
