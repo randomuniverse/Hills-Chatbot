@@ -44,6 +44,11 @@ export default function App() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave]);
 
+  function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+  }
 
   function addBot(text, nextStep, delay=900) {
     setIsTyping(true);
@@ -81,10 +86,10 @@ export default function App() {
 
     if (handleContextInput(txt)) return;
 
-    const fallbackSteps = ["PARSING","CONFIRM_PARSE","AUTH_PROMPT","PET_TYPE","BREED","AGE","BODY","LOADING","DONE","CONFIRM"];
+    const fallbackSteps = ["PARSING","CONFIRM_PARSE","AUTH_PROMPT","PET_TYPE","BREED","AGE","WEIGHT","BODY","CONCERNS","SPECIAL","LOADING","DONE","CONFIRM"];
     if (step !== "START" && fallbackSteps.includes(step)) {
       try {
-        const res = await fetch("/api/chat-fallback", {
+        const res = await fetchWithTimeout("/api/chat-fallback", {
           method:"POST",
           headers:{"Content-Type":"application/json"},
           body: JSON.stringify({ text: txt, current_step: step })
@@ -102,7 +107,7 @@ export default function App() {
     setStep("PARSING");
 
     try {
-      const res = await fetch("/api/parse-intent", {
+      const res = await fetchWithTimeout("/api/parse-intent", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body: JSON.stringify({ text: txt })
@@ -273,7 +278,7 @@ export default function App() {
 
     if (freeText.trim()) {
       try {
-        const res = await fetch("/api/classify-concerns",{
+        const res = await fetchWithTimeout("/api/classify-concerns",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
           body:JSON.stringify({text:freeText.trim(), pet_type:data.petType})
@@ -315,7 +320,7 @@ export default function App() {
     addBot("분석 중이에요... 잠시만 기다려주세요 🔍", "LOADING", 400);
 
     try {
-      const res = await fetch("/api/recommend",{
+      const res = await fetchWithTimeout("/api/recommend",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
@@ -334,9 +339,12 @@ export default function App() {
       setStep("DONE");
       addBot(`분석 완료! 🎉\n아래에서 ${data.petName||"반려동물"}에게 딱 맞는 Hill's 제품을 확인해보세요.`, "DONE", 600);
       setTimeout(() => setShowSave(true), 2000);
-    } catch {
+    } catch (err) {
       setStep("DONE");
-      addBot("일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.", "DONE", 400);
+      const msg = err.name === "AbortError"
+        ? "응답 시간이 초과되었어요. 🔄 다시 추천받기를 눌러주세요."
+        : "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.";
+      addBot(msg, "DONE", 400);
     }
   }
 
@@ -486,10 +494,15 @@ export default function App() {
         </div>
         <div className="card-body">
           <div className="card-img-row">
-            {product.image_url
-              ? <img className="card-img" src={product.image_url} alt={product.product_name_kr}/>
-              : <div className="card-img-box">{data.petType==="dog"?"🐶":"🐱"}</div>
-            }
+            <div className="card-img-box">
+              {product.image_url ? (
+                <img src={product.image_url} alt={product.product_name_kr} className="card-product-img"
+                  onError={e=>{e.target.style.display='none'; e.target.nextSibling.style.display='flex';}} />
+              ) : null}
+              <span className="card-img-fallback" style={product.image_url?{display:'none'}:undefined}>
+                {data.petType==="dog"?"🐶":"🐱"}
+              </span>
+            </div>
             <div className="card-info">
               <div className="card-name">{product.product_name_kr}</div>
               <div className="card-brand">{product.brand}</div>
