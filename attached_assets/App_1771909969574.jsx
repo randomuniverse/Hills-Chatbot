@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
+// ── 데이터 ─────────────────────────────────────────────
 const DOG_BREEDS = ["믹스견","말티즈","푸들","시츄","포메라니안","치와와","비숑프리제","요크셔테리어","닥스훈트","웰시코기","비글","골든리트리버","래브라도","보더콜리","허스키","진돗개","삽살개","기타"];
 const CAT_BREEDS = ["믹스묘","코리안숏헤어","페르시안","메인쿤","브리티시숏헤어","스코티시폴드","러시안블루","시암","랙돌","아비시니안","기타"];
 const DOG_CONCERNS = ["소화기계","체중 관리","관절 관리","피부 관리","신장 관리","구강 관리","없음"];
@@ -15,13 +16,12 @@ const STEP_PROGRESS = {
 function buildSummary(d) {
   const age = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory]||"";
   const body = {underweight:"마름",normal:"정상",overweight:"과체중"}[d.bodyCondition]||"";
-  const weightText = d.weight ? `${d.weight}kg` : "모름";
-  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체중 ${weightText} · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
+  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체중 ${d.weight||"?"}kg · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료 추천 서비스입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
-  const [step, setStep]           = useState("START");
+  const [messages, setMessages]   = useState([]);
+  const [step, setStep]           = useState("IDLE");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
   const [freeText, setFreeText]   = useState("");
@@ -35,6 +35,12 @@ export default function App() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave]);
 
+  // 초기 인사
+  useEffect(() => {
+    setTimeout(() => {
+      addBot("안녕하세요! 👋\n\n<strong>Hills Pet Nutrition</strong> 맞춤 사료 추천 서비스입니다.\n반려동물에 대해 고민이 있으시면 편하게 말씀해 주세요.", "START");
+    }, 600);
+  }, []);
 
   function addBot(text, nextStep, delay=900) {
     setIsTyping(true);
@@ -46,16 +52,12 @@ export default function App() {
   }
   function addUser(text) { setMessages(p=>[...p,{role:"user",text}]); }
 
+  // ── 자유 입력 처리 (시작) ──────────────────────────────
   async function handleMainInput() {
     const txt = mainInput.trim();
     if (!txt) return;
     addUser(txt);
     setMainInput("");
-
-    if (step !== "START") {
-      return;
-    }
-
     setStep("PARSING");
 
     try {
@@ -65,36 +67,37 @@ export default function App() {
         body: JSON.stringify({ text: txt })
       });
       const parsed = await res.json();
+      // parsed: { pet_type, concerns, sympathy_msg, missing }
 
       setData(p=>({...p, petType: parsed.pet_type, healthConcerns: parsed.concerns||[] }));
 
-      const sympathyMsg = parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.";
-      setIsTyping(true);
-      setTimeout(() => {
-        setIsTyping(false);
-        setMessages(p=>[...p,{role:"bot",text:sympathyMsg}]);
+      // 공감 메시지 먼저
+      addBot(parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.", "CONFIRM_PARSE", 600);
 
-        setTimeout(() => {
-          const chips = [];
-          if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
-          if (parsed.concerns?.length) chips.push(...parsed.concerns);
-          const chipHtml = chips.length
-            ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
-            : "";
-          addBot(`파악한 내용이에요.${chipHtml}\n\n맞춤 추천을 시작할까요?`, "CONFIRM_PARSE");
-        }, 800);
-      }, 900);
+      // 파악한 내용 + 확인 요청
+      setTimeout(() => {
+        const chips = [];
+        if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
+        if (parsed.concerns?.length) chips.push(...parsed.concerns);
+        const chipHtml = chips.length
+          ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
+          : "";
+        addBot(`파악한 내용이에요.${chipHtml}\n\n맞춤 추천을 시작할까요?`, "CONFIRM_PARSE");
+      }, 1900);
 
     } catch {
+      // 파싱 실패 시 일반 흐름으로
       addBot("말씀 잘 들었어요! 몇 가지 정보를 더 알려주시면 정확하게 추천해드릴게요.", "PET_TYPE", 600);
     }
   }
 
+  // 추천 시작 (CONFIRM_PARSE 후)
   function startRecommend() {
     addUser("네, 추천받을게요!");
     addBot("좋아요! 조금 더 정확한 추천을 위해 몇 가지만 여쭤볼게요.", "AUTH_PROMPT", 500);
   }
 
+  // ── 회원 선택 ──────────────────────────────────────────
   function handleAuth(choice) {
     if (choice === "member") {
       addUser("회원으로 계속");
@@ -108,6 +111,7 @@ export default function App() {
     }
   }
 
+  // ── 이후 단계들 ────────────────────────────────────────
   function handlePetType(type) {
     addUser(type==="dog"?"🐶 강아지":"🐱 고양이");
     setData(p=>({...p, petType:type}));
@@ -135,16 +139,10 @@ export default function App() {
     addBot("체형 상태는 어떤가요?", "BODY");
   }
 
-  function handleWeightUnknown() {
-    addUser("모름");
-    setInputVal("");
-    setData(p=>({...p, weight:null}));
-    addBot("괜찮아요! 대신 체형을 보고 판단해볼게요.\n아래에서 가장 가까운 체형을 선택해주세요.", "BODY");
-  }
-
   function handleBody(val, label) {
     addUser(label);
     setData(p=>({...p, bodyCondition:val}));
+    // 이미 concerns가 파싱으로 들어온 경우
     if (data.healthConcerns?.length) {
       addBot("건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요.", "CONCERNS");
     } else {
@@ -186,7 +184,7 @@ export default function App() {
     setData(newData);
     setSelected([]); setFreeText("");
 
-    addBot("거의 다 왔어요! 마지막으로 한 가지만요.\n\n혹시 특이사항이 있으신가요?\n예: 임신 중, 약 복용 중, 수술 후 회복 중 등", "SPECIAL");
+    addBot("거의 다 왔어요! 마지막으로 한 가지만요.\n\n혹시 특이사항이 있으신가요?\n예: 임신 중, 약 복용 중, 수술 후 회복 중, 다른 사료와 혼합 예정 등", "SPECIAL");
   }
 
   function handleSpecial(notes) {
@@ -201,6 +199,7 @@ export default function App() {
     addBot(`입력하신 내용을 정리했어요. ✅\n\n${summary}${hasNotes ? `\n특이사항: ${notes.trim()}` : ""}\n\n이대로 맞춤 추천을 받으시겠어요?`, "CONFIRM");
   }
 
+  // ── 최종 추천 ──────────────────────────────────────────
   async function handleConfirm() {
     addUser("네, 추천받을게요 ✨");
     setStep("LOADING");
@@ -213,7 +212,7 @@ export default function App() {
         body:JSON.stringify({
           pet_type: data.petType,
           life_stage: data.ageCategory,
-          size: data.weight==null?"all":(data.weight<10?"small":"large"),
+          size: data.weight<10?"small":"large",
           body_condition: data.bodyCondition||"normal",
           health_concerns: data.healthConcerns||[],
           breed: data.breed,
@@ -233,19 +232,31 @@ export default function App() {
   }
 
   function handleRestart() {
-    setMessages([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료 추천 서비스입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
-    setStep("START"); setData({}); setSelected([]);
-    setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
-    setResults(null); setShowSave(false);
+    setMessages([]); setStep("IDLE"); setData({}); setSelected([]);
+    setFreeText(""); setInputVal(""); setMainInput("");
+    setResults(null); setShowSave(false); setSpecial("");
+    setTimeout(()=>addBot("안녕하세요! 👋\n\n<strong>Hills Pet Nutrition</strong> 맞춤 사료 추천 서비스입니다.\n반려동물에 대해 고민이 있으시면 편하게 말씀해 주세요.","START"),400);
   }
 
-  function handleStartRecommendBtn() {
-    addUser("맞춤 사료 추천받기");
-    addBot("시작해볼게요! 먼저 회원 여부를 확인할게요.", "AUTH_PROMPT", 400);
-  }
-
+  // ── 버튼 렌더링 ───────────────────────────────────────
   function renderButtons() {
-    if (step==="START") return null;
+    // 시작 화면 - 자유 입력 + 버튼
+    if (step==="START") return (
+      <div className="main-input-wrap">
+        <textarea className="main-free-input"
+          placeholder="예) 강아지 눈물 자국 때문에 고민이에요&#10;예) 고양이가 살이 너무 쪄서요..."
+          value={mainInput}
+          onChange={e=>setMainInput(e.target.value)}
+          onKeyDown={e=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleMainInput();}}}
+        />
+        <button className="main-send-btn" onClick={handleMainInput}>전송하기 →</button>
+        <div className="or-divider"><span className="or-text">또는</span></div>
+        <button className="choice-btn primary" onClick={()=>{
+          addUser("맞춤 사료 추천받기");
+          addBot("시작해볼게요! 먼저 회원 여부를 확인할게요.", "AUTH_PROMPT", 400);
+        }}>🐾 맞춤 사료 추천받기</button>
+      </div>
+    );
 
     if (step==="CONFIRM_PARSE") return (
       <div className="btn-row">
@@ -290,15 +301,12 @@ export default function App() {
     );
 
     if (step==="WEIGHT") return (
-      <div className="concerns-wrap">
-        <div className="input-row">
-          <input className="text-input" type="number" placeholder="예: 5.2"
-            value={inputVal} onChange={e=>setInputVal(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&handleWeight()} autoFocus />
-          <span className="unit-label">kg</span>
-          <button className="send-btn" onClick={handleWeight}>→</button>
-        </div>
-        <button className="choice-btn ghost" onClick={handleWeightUnknown}>잘 모르겠어요</button>
+      <div className="input-row">
+        <input className="text-input" type="number" placeholder="예: 5.2"
+          value={inputVal} onChange={e=>setInputVal(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&handleWeight()} autoFocus />
+        <span className="unit-label">kg</span>
+        <button className="send-btn" onClick={handleWeight}>→</button>
       </div>
     );
 
@@ -334,12 +342,19 @@ export default function App() {
 
     if (step==="SPECIAL") return (
       <div className="concerns-wrap">
-        <textarea className="free-input"
-          placeholder="예: 임신 중이에요, 약을 먹고 있어요, 수술 후 회복 중..."
-          value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
+        <textarea className="free-input" style={{height:"80px"}}
+          placeholder="예: 현재 임신 중이에요&#10;예: 심장약 복용 중이에요&#10;예: 특이사항 없어요"
+          value={specialNotes}
+          onChange={e=>setSpecial(e.target.value)} />
         <div className="btn-row">
-          <button className="next-btn" style={{flex:1}} onClick={()=>handleSpecial(specialNotes)}>다음 →</button>
-          <button className="choice-btn ghost" onClick={()=>handleSpecial("")}>없어요</button>
+          <button className="next-btn" style={{flex:1}}
+            onClick={()=>handleSpecial(specialNotes)}>
+            다음 →
+          </button>
+          <button className="choice-btn ghost"
+            onClick={()=>handleSpecial("")}>
+            없음
+          </button>
         </div>
       </div>
     );
@@ -360,6 +375,7 @@ export default function App() {
     return null;
   }
 
+  // ── HTML 말풍선 렌더 ──────────────────────────────────
   function BubbleText({text}) {
     const html = text
       .replace(/\n/g,"<br/>")
@@ -368,6 +384,7 @@ export default function App() {
     return <span dangerouslySetInnerHTML={{__html:html}}/>;
   }
 
+  // ── 제품 카드 ─────────────────────────────────────────
   function ProductCard({product, index}) {
     const ranks=["BEST MATCH","RECOMMENDED","ALSO GREAT"];
     return (
@@ -407,7 +424,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <img className="logo-icon" src="/bot-logo.png" alt="Pet Life Planner" />
+          <div className="logo-icon">🐾</div>
           <div>
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">맞춤 사료 추천</div>
@@ -425,7 +442,7 @@ export default function App() {
 
         {messages.map((m,i)=>(
           <div key={i} className={`bubble-wrap ${m.role}`}>
-            {m.role==="bot"&&<img className="avatar" src="/bot-avatar.png" alt="bot" />}
+            {m.role==="bot"&&<div className="avatar">🐾</div>}
             <div className={`bubble ${m.role}`}>
               <BubbleText text={m.text}/>
             </div>
@@ -434,7 +451,7 @@ export default function App() {
 
         {isTyping&&(
           <div className="bubble-wrap bot">
-            <img className="avatar" src="/bot-avatar.png" alt="bot" />
+            <div className="avatar">🐾</div>
             <div className="bubble bot typing"><span/><span/><span/></div>
           </div>
         )}
@@ -448,11 +465,13 @@ export default function App() {
                 <div className="overall-text">{results.overall_reasoning}</div>
               </div>
             )}
-            {results.special_warning&&(
-              <div className="rx-note">🔔 {results.special_warning}</div>
-            )}
             {results.prescription_note&&(
               <div className="rx-note">⚠️ {results.prescription_note}</div>
+            )}
+            {results.special_warning&&(
+              <div className="rx-note" style={{borderColor:"#FDD835",background:"#FFFDE7",color:"#5D4037"}}>
+                💡 {results.special_warning}
+              </div>
             )}
           </div>
         )}
@@ -476,34 +495,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        {step!=="LOADING"&&step!=="START"&&renderButtons()}
-        {step==="START"&&!isTyping&&messages.length>0&&(
-          <div className="quick-options">
-            <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>베스트</span><span className="quick-arrow">→</span>
-            </a>
-            <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>신제품</span><span className="quick-arrow">→</span>
-            </a>
-            <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>브랜드 스토어</span><span className="quick-arrow">→</span>
-            </a>
-            <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
-              <span>제품 추천 받기</span><span className="quick-arrow">→</span>
-            </button>
-          </div>
-        )}
-        {step!=="LOADING"&&step!=="DONE"&&(
-          <div className="input-row" style={{marginTop: 8}}>
-            <input className="text-input" type="text"
-              placeholder="힐스와 상담하기"
-              value={mainInput}
-              onChange={e=>setMainInput(e.target.value)}
-              onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleMainInput();}}}
-            />
-            <button className="send-btn" onClick={handleMainInput}>→</button>
-          </div>
-        )}
+        {step!=="LOADING"&&renderButtons()}
       </footer>
     </div>
   );

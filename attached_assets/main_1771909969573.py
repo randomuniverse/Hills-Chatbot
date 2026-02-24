@@ -12,6 +12,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
 claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
 
+# ── 스키마 ─────────────────────────────────────────────
 class IntentRequest(BaseModel):
     text: str
 
@@ -27,15 +28,17 @@ class RecommendRequest(BaseModel):
     health_concerns: list[str]
     breed: Optional[str] = None
     pet_name: Optional[str] = None
-    special_notes: Optional[str] = None
+    special_notes: Optional[str] = None   # 특이사항 자유 입력
 
 class ParseSpecialRequest(BaseModel):
     text: str
     pet_type: str
     life_stage: str
 
+# ── 1. 자유 입력 의도 파악 ──────────────────────────────
 @app.post("/api/parse-intent")
 async def parse_intent(req: IntentRequest):
+    """사용자의 자유 입력에서 반려동물 종류, 건강 고민, 공감 메시지를 추출"""
     resp = claude.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=512,
@@ -57,13 +60,11 @@ async def parse_intent(req: IntentRequest):
             "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'"
         )}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        return json.loads(raw)
-    except (json.JSONDecodeError, IndexError, KeyError):
-        return {"pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    return json.loads(raw)
 
+# ── 2. 건강 고민 분류 ──────────────────────────────────
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
     dog_cats = ["소화기계","체중 관리","관절 관리","피부 관리","신장 관리","구강 관리"]
@@ -80,16 +81,15 @@ async def classify_concerns(req: ClassifyRequest):
             f"해당 카테고리를 JSON으로: {{\"concerns\": [...]}}"
         )}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        data = json.loads(raw)
-        return {"concerns": [c for c in data.get("concerns",[]) if c in categories]}
-    except (json.JSONDecodeError, IndexError, KeyError):
-        return {"concerns": []}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    data = json.loads(raw)
+    return {"concerns": [c for c in data.get("concerns",[]) if c in categories]}
 
+# ── 3. 특이사항 분석 API ───────────────────────────────
 @app.post("/api/parse-special")
 async def parse_special(req: ParseSpecialRequest):
+    """특이사항 자유 입력을 분석해서 추가 필터 조건 추출"""
     resp = claude.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=400,
@@ -112,33 +112,40 @@ async def parse_special(req: ParseSpecialRequest):
             "약 복용 중이거나 수술 후면 vet_consult_required를 true로 설정하세요."
         )}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        return json.loads(raw)
-    except (json.JSONDecodeError, IndexError, KeyError):
-        return {"is_pregnant": False, "is_nursing": False, "has_medication": False, "force_rx": False, "add_concerns": [], "override_stage": None, "vet_consult_required": False, "summary": ""}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    return json.loads(raw)
 
+# ── 4. 추천 ────────────────────────────────────────────
 def normalize_stage(stage):
     if stage=="puppy":  return ["puppy"]
     if stage=="adult":  return ["adult"]
     return ["senior7","senior11","adult"]
 
-def filter_by_stage(rows, life_stage, special):
+def filter_by_stage(rows: list, life_stage: str, special) -> list:
+    """생애단계 기반 비추천 필터링"""
     if not rows:
         return rows
+
+    # 임신/수유 중 → 어덜트 전용 제품 제외, 퍼피 제품 우선
     if special and (special.get("is_pregnant") or special.get("is_nursing")):
         puppy_products = [p for p in rows if p.get("life_stage") == "puppy"]
         if puppy_products:
             return puppy_products
+
+    # 노령견인데 퍼피 제품 섞이면 제외
     if life_stage in ("senior7", "senior11"):
         rows = [p for p in rows if p.get("life_stage") != "puppy"]
+
+    # 퍼피인데 어덜트/시니어 제품 제외
     if life_stage == "puppy":
         rows = [p for p in rows if p.get("life_stage") == "puppy"]
+
     return rows
 
 @app.post("/api/recommend")
 async def recommend(req: RecommendRequest):
+    # 특이사항에서 생애단계 오버라이드 여부 확인
     special = None
     if req.special_notes and req.special_notes.strip():
         try:
@@ -151,6 +158,7 @@ async def recommend(req: RecommendRequest):
         except:
             pass
 
+    # 생애단계 결정 (특이사항으로 오버라이드 가능)
     effective_stage = req.life_stage
     if special and special.get("override_stage"):
         effective_stage = special["override_stage"]
@@ -165,8 +173,10 @@ async def recommend(req: RecommendRequest):
     if not rows:
         raise HTTPException(404, "추천 가능한 제품이 없습니다.")
 
+    # 생애단계 기반 비추천 필터
     rows = filter_by_stage(rows, effective_stage, special)
 
+    # 건강고민 + 특이사항 추가 고민 합산
     all_concerns = list(req.health_concerns)
     if special and special.get("add_concerns"):
         all_concerns = list(set(all_concerns + special["add_concerns"]))
@@ -178,6 +188,7 @@ async def recommend(req: RecommendRequest):
     general = [p for p in rows if not p.get("is_prescription")]
     rx      = [p for p in rows if p.get("is_prescription")]
 
+    # 수의사 상담 필요 케이스는 처방식 후보도 포함
     if special and (special.get("vet_consult_required") or special.get("force_rx")):
         top = (general[:4] + rx[:3])[:7]
     else:
@@ -225,12 +236,9 @@ Hills 제품 후보:
         system="Hills Pet Nutrition 공식 영양 상담사. 처방식은 수의사 상담 필수 안내. JSON으로만 응답.",
         messages=[{"role":"user","content":prompt}]
     )
-    try:
-        raw = resp.content[0].text.strip()
-        if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
-        ai = json.loads(raw)
-    except (json.JSONDecodeError, IndexError, KeyError):
-        ai = {"selected_indices": [1], "overall_reasoning": "", "individual_reasons": [], "prescription_note": None, "special_warning": None}
+    raw = resp.content[0].text.strip()
+    if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
+    ai = json.loads(raw)
 
     selected = [top[i-1] for i in ai.get("selected_indices",[1]) if 1<=i<=len(top)]
     reasons  = ai.get("individual_reasons",[])
