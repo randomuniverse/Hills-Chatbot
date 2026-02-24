@@ -15,7 +15,8 @@ const STEP_PROGRESS = {
 function buildSummary(d) {
   const age = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory]||"";
   const body = {underweight:"마름",normal:"정상",overweight:"과체중"}[d.bodyCondition]||"";
-  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체중 ${d.weight||"?"}kg · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
+  const weightText = d.weight ? `${d.weight}kg` : "모름";
+  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체중 ${weightText} · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
 }
 
 export default function App() {
@@ -128,6 +129,13 @@ export default function App() {
     addBot("체형 상태는 어떤가요?", "BODY");
   }
 
+  function handleWeightUnknown() {
+    addUser("모름");
+    setInputVal("");
+    setData(p=>({...p, weight:null}));
+    addBot("괜찮아요! 대신 체형을 보고 판단해볼게요.\n아래에서 가장 가까운 체형을 선택해주세요.", "BODY");
+  }
+
   function handleBody(val, label) {
     addUser(label);
     setData(p=>({...p, bodyCondition:val}));
@@ -188,7 +196,7 @@ export default function App() {
         body:JSON.stringify({
           pet_type: data.petType,
           life_stage: data.ageCategory,
-          size: data.weight<10?"small":"large",
+          size: data.weight==null?"all":(data.weight<10?"small":"large"),
           body_condition: data.bodyCondition||"normal",
           health_concerns: data.healthConcerns||[],
           breed: data.breed,
@@ -274,12 +282,15 @@ export default function App() {
     );
 
     if (step==="WEIGHT") return (
-      <div className="input-row">
-        <input className="text-input" type="number" placeholder="예: 5.2"
-          value={inputVal} onChange={e=>setInputVal(e.target.value)}
-          onKeyDown={e=>e.key==="Enter"&&handleWeight()} autoFocus />
-        <span className="unit-label">kg</span>
-        <button className="send-btn" onClick={handleWeight}>→</button>
+      <div className="concerns-wrap">
+        <div className="input-row">
+          <input className="text-input" type="number" placeholder="예: 5.2"
+            value={inputVal} onChange={e=>setInputVal(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&handleWeight()} autoFocus />
+          <span className="unit-label">kg</span>
+          <button className="send-btn" onClick={handleWeight}>→</button>
+        </div>
+        <button className="choice-btn ghost" onClick={handleWeightUnknown}>잘 모르겠어요</button>
       </div>
     );
 
