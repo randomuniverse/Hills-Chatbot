@@ -20,8 +20,8 @@ function buildSummary(d) {
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([]);
-  const [step, setStep]           = useState("IDLE");
+  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n\n<strong>Hills Pet Nutrition</strong> 맞춤 사료 추천 서비스입니다.\n반려동물에 대해 고민이 있으시면 편하게 말씀해 주세요."}]);
+  const [step, setStep]           = useState("START");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
   const [freeText, setFreeText]   = useState("");
@@ -34,11 +34,6 @@ export default function App() {
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      addBot("안녕하세요! 👋\n\n<strong>Hills Pet Nutrition</strong> 맞춤 사료 추천 서비스입니다.\n반려동물에 대해 고민이 있으시면 편하게 말씀해 주세요.", "START");
-    }, 600);
-  }, []);
 
   function addBot(text, nextStep, delay=900) {
     setIsTyping(true);
@@ -56,7 +51,7 @@ export default function App() {
     addUser(txt);
     setMainInput("");
 
-    if (step !== "START" && step !== "IDLE") {
+    if (step !== "START") {
       return;
     }
 
@@ -412,23 +407,6 @@ export default function App() {
           </div>
         ))}
 
-        {step==="START"&&!isTyping&&messages.length>0&&(
-          <div className="quick-options">
-            <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>베스트</span><span className="quick-arrow">→</span>
-            </a>
-            <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>신제품</span><span className="quick-arrow">→</span>
-            </a>
-            <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>브랜드 스토어</span><span className="quick-arrow">→</span>
-            </a>
-            <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
-              <span>제품 추천 받기</span><span className="quick-arrow">→</span>
-            </button>
-          </div>
-        )}
-
         {isTyping&&(
           <div className="bubble-wrap bot">
             <img className="avatar" src="/bot-logo.png" alt="bot" />
@@ -471,8 +449,24 @@ export default function App() {
 
       <footer className="footer">
         {step!=="LOADING"&&step!=="START"&&renderButtons()}
+        {step==="START"&&!isTyping&&messages.length>0&&(
+          <div className="quick-options">
+            <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
+              <span>베스트</span><span className="quick-arrow">→</span>
+            </a>
+            <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
+              <span>신제품</span><span className="quick-arrow">→</span>
+            </a>
+            <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
+              <span>브랜드 스토어</span><span className="quick-arrow">→</span>
+            </a>
+            <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
+              <span>제품 추천 받기</span><span className="quick-arrow">→</span>
+            </button>
+          </div>
+        )}
         {step!=="LOADING"&&step!=="DONE"&&(
-          <div className="input-row" style={{marginTop: step==="START"?0:8}}>
+          <div className="input-row" style={{marginTop: 8}}>
             <input className="text-input" type="text"
               placeholder="힐스와 상담하기"
               value={mainInput}
