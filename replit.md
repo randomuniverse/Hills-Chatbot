@@ -37,6 +37,7 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - `POST /api/parse-intent` - Parse free-text input to extract pet type, concerns, and generate sympathy message
 - `POST /api/classify-concerns` - Classify free-text health concerns into categories using Claude
 - `POST /api/parse-special` - Analyze special notes (pregnancy, medication, surgery) for additional filter conditions
+- `POST /api/chat-fallback` - Handle off-topic or contextual messages with Claude, step-aware responses
 - `POST /api/recommend` - Get product recommendations based on pet info (supports special_notes)
 - `GET /health` - Health check endpoint
 
@@ -68,3 +69,6 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - Concise greeting message, wider chat bubble (90%), input field with rounded square style
 - Special notes step: pregnancy/medication/surgery analysis with life stage override
 - Enhanced recommendation: filter_by_stage, special warnings, vet consultation notes
+- IME fix: Korean input double character prevention on Enter key
+- Context-aware chat: short responses (네/응/좋아) understood based on current step
+- Off-topic fallback: Claude-powered graceful handling of unrelated messages

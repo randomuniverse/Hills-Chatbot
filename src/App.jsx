@@ -46,15 +46,49 @@ export default function App() {
   }
   function addUser(text) { setMessages(p=>[...p,{role:"user",text}]); }
 
+  const AFFIRM = /^(네|넵|넹|응|어|ㅇㅇ|좋아|좋아요|그래|그래요|할게|할래|할래요|시작|시작할게|ok|yes|예|맞아|맞아요|해줘|해주세요|부탁|부탁해)$/i;
+  const DENY   = /^(아니|아니요|아뇨|싫어|안할래|괜찮아|됐어|패스|no|nope)$/i;
+
+  function handleContextInput(txt) {
+    if (step==="CONFIRM_PARSE") {
+      if (AFFIRM.test(txt)) { startRecommend(); return true; }
+      if (DENY.test(txt)) {
+        addBot("알겠어요! 처음부터 차근차근 진행할게요.", "AUTH_PROMPT");
+        return true;
+      }
+    }
+    if (step==="CONFIRM") {
+      if (AFFIRM.test(txt)) { handleConfirm(); return true; }
+      if (DENY.test(txt)) { handleRestart(); return true; }
+    }
+    return false;
+  }
+
   async function handleMainInput() {
     const txt = mainInput.trim();
     if (!txt) return;
     addUser(txt);
     setMainInput("");
 
-    if (step !== "START") {
+    if (handleContextInput(txt)) return;
+
+    const noTextSteps = ["PARSING","AUTH_PROMPT","PET_TYPE","BREED","AGE","BODY","LOADING","DONE"];
+    if (step !== "START" && noTextSteps.includes(step)) {
+      try {
+        const res = await fetch("/api/chat-fallback", {
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({ text: txt, current_step: step })
+        });
+        const d = await res.json();
+        addBot(d.reply || "힐스 펫 플래너는 맞춤 사료 추천에 특화되어 있어요! 추천을 계속 진행해볼까요?");
+      } catch {
+        addBot("죄송해요, 잠시 오류가 있었어요. 추천을 계속 진행해볼까요?");
+      }
       return;
     }
+
+    if (step !== "START") return;
 
     setStep("PARSING");
 
@@ -294,7 +328,7 @@ export default function App() {
         <div className="input-row">
           <input className="text-input" type="number" placeholder="예: 5.2"
             value={inputVal} onChange={e=>setInputVal(e.target.value)}
-            onKeyDown={e=>e.key==="Enter"&&handleWeight()} autoFocus />
+            onKeyDown={e=>{if(e.key==="Enter"&&!e.nativeEvent.isComposing)handleWeight();}} autoFocus />
           <span className="unit-label">kg</span>
           <button className="send-btn" onClick={handleWeight}>→</button>
         </div>
@@ -499,7 +533,8 @@ export default function App() {
               placeholder="힐스와 상담하기"
               value={mainInput}
               onChange={e=>setMainInput(e.target.value)}
-              onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();handleMainInput();}}}
+              onKeyDown={e=>{if(e.key==="Enter"&&!e.nativeEvent.isComposing){e.preventDefault();handleMainInput();}}}
+              onCompositionEnd={e=>{}}
             />
             <button className="send-btn" onClick={handleMainInput}>→</button>
           </div>
