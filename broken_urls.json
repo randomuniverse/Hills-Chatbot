@@ -1,0 +1,182 @@
+{
+  "valid": 110,
+  "broken": [
+    {
+      "name": "퍼피 스몰포(치킨, 밀, 보리)",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-puppy-small-paws-chicken-meal-barley-rice-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "퍼피 라지 브리드 치킨 & 쌀 레시피",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-puppy-large-breed-chicken-rice-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "퍼피 힐스 사이언스 다이어트 세이보리 스튜(치킨 & 야채)",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-puppy-savory-stew-chicken-vegetable-canned",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "i/d 퍼피 치킨 & 채소 레시피 반려견용 건식사료",
+      "url": "https://www.hillspet.co.kr/dog-food/pd-id-puppy-canine-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "프리스크립션 다이어트"
+    },
+    {
+      "name": "키튼 치킨 레시피 (임신/수유묘 겸용)",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-kitten-chicken-recipe-dry",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "키튼 참치 레시피 주식캔",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-kitten-tuna-canned",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "키튼 헬시 퀴진 연어 & 참치 스튜",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-kitten-healthy-cuisine-salmon-tuna-stew-canned",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 스몰 앤 미니 라이트 치킨 레시피",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-7-small-mini-light-chicken-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 라이트 치킨밀, 보리 & 현미 레시피",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-7-light-chicken-meal-barley-rice-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 센서티브 스토막 & 스킨 치킨 레시피",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-7-sensitive-stomach-skin-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 퍼펙트 웨이트 치킨 & 야채 스튜",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-7-perfect-weight-stew-canned",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 라지 브리드 치킨밀, 보리 & 쌀 레시피",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-7-large-breed-chicken-meal-rice-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 세이보리 스튜 위드 치킨 & 채소",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-7-savory-stew-chicken-vegetable-canned",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "b/d 브레인 에이징 케어 반려견용 건식사료",
+      "url": "https://www.hillspet.co.kr/dog-food/pd-bd-canine-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "프리스크립션 다이어트"
+    },
+    {
+      "name": "j/d 조인트 케어 반려견용 습식사료",
+      "url": "https://www.hillspet.co.kr/dog-food/pd-jd-canine-canned",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "프리스크립션 다이어트"
+    },
+    {
+      "name": "어덜트 11+ 스몰 앤 미니 심장 건강 치킨, 현미 & 보리",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-11-small-paws-heart-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 11+ 치킨밀, 보리 & 쌀 레시피",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-11-chicken-meal-barley-rice-dry",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 11+ 세이보리 스튜 위드 치킨 & 채소",
+      "url": "https://www.hillspet.co.kr/dog-food/science-diet-adult-11-savory-stew-chicken-canned",
+      "status": "404",
+      "pet_type": "dog",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 라이트 치킨 레시피",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-adult-7-light-dry",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 유리너리 헤어볼 컨트롤 치킨 레시피",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-adult-7-urinary-hairball-control-dry",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 7+ 헬시 퀴진 슬라이스드 치킨 & 채소 스튜",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-adult-7-healthy-cuisine-chicken-vegetable-stew-canned",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "b/d 브레인 에이징 케어 반려묘용 건식사료",
+      "url": "https://www.hillspet.co.kr/cat-food/pd-bd-feline-dry",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "프리스크립션 다이어트"
+    },
+    {
+      "name": "어덜트 11+ 헤어볼 컨트롤 치킨 레시피",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-adult-11-hairball-control-dry",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 11+ 인도어 치킨 레시피",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-adult-11-indoor-dry",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    },
+    {
+      "name": "어덜트 11+ 헬시 퀴진 로스티드 치킨 & 라이스 스튜",
+      "url": "https://www.hillspet.co.kr/cat-food/science-diet-adult-11-healthy-cuisine-chicken-rice-stew-canned",
+      "status": "404",
+      "pet_type": "cat",
+      "brand": "사이언스 다이어트"
+    }
+  ],
+  "empty": 0,
+  "total": 135
+}
