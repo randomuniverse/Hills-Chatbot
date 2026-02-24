@@ -52,13 +52,15 @@ async def parse_intent(req: IntentRequest):
             "{\n"
             '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
             '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
+            '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
             '  "concerns": ["소화기계","피부 관리" 등 해당 항목들],\n'
             '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
             '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
             "}\n\n"
+            "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
             "concerns 가능 값: 소화기계, 체중 관리, 관절 관리, 피부 관리, 신장 관리, 구강 관리, 비뇨기계, 헤어볼\n"
             "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
-            "is_relevant가 false인 경우: pet_type=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
+            "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
         )}]
     )
     try:

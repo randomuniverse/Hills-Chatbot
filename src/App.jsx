@@ -32,6 +32,8 @@ export default function App() {
   const [results, setResults]     = useState(null);
   const [showSave, setShowSave]   = useState(false);
   const bottomRef = useRef(null);
+  const dataRef = useRef(data);
+  useEffect(() => { dataRef.current = data; }, [data]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave]);
 
@@ -114,7 +116,9 @@ export default function App() {
         return;
       }
 
-      setData(p=>({...p, petType: parsed.pet_type, healthConcerns: parsed.concerns||[] }));
+      const newData = { petType: parsed.pet_type, healthConcerns: parsed.concerns||[] };
+      if (parsed.age_category) newData.ageCategory = parsed.age_category;
+      setData(p=>({...p, ...newData}));
 
       const sympathyMsg = parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.";
       setIsTyping(true);
@@ -125,6 +129,10 @@ export default function App() {
         setTimeout(() => {
           const chips = [];
           if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
+          if (parsed.age_category) {
+            const ageLabels = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"};
+            if (ageLabels[parsed.age_category]) chips.push(`📅 ${ageLabels[parsed.age_category]}`);
+          }
           if (parsed.concerns?.length) chips.push(...parsed.concerns);
           const chipHtml = chips.length
             ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
@@ -138,6 +146,36 @@ export default function App() {
     }
   }
 
+  function getNextStep(currentData) {
+    const d = currentData || data;
+    if (!d.petType) return { step: "PET_TYPE", msg: "반려동물 종류를 선택해주세요." };
+    if (!d.breed) return { step: "BREED", msg: `${d.petType==="dog"?"강아지":"고양이"} 품종을 선택해주세요.` };
+    if (!d.ageCategory) return { step: "AGE", msg: "나이대를 알려주세요." };
+    if (d.weight === undefined) return { step: "WEIGHT", msg: "체중을 입력해주세요. (kg)" };
+    if (!d.bodyCondition) return { step: "BODY", msg: "체형 상태는 어떤가요?" };
+    if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: "건강 관련 고민이 있으신가요?\n버튼으로 선택하시거나 직접 입력해도 돼요." };
+    return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요." };
+  }
+
+  function goToNextStep(currentData) {
+    const d = currentData || dataRef.current;
+    const { step: nextStep, msg } = getNextStep(d);
+    const known = [];
+    if (d.petType) known.push(d.petType==="dog"?"🐶 강아지":"🐱 고양이");
+    if (d.ageCategory) {
+      const ageLabel = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory];
+      if (ageLabel) known.push(ageLabel);
+    }
+    if (d.healthConcerns?.length) known.push(...d.healthConcerns);
+
+    if (known.length > 0 && nextStep !== "CONCERNS") {
+      const skipMsg = `이미 알고 있는 정보는 넘어갈게요! 😊\n${msg}`;
+      addBot(skipMsg, nextStep, 500);
+    } else {
+      addBot(msg, nextStep, 500);
+    }
+  }
+
   function startRecommend() {
     addUser("네, 추천받을게요!");
     addBot("좋아요! 조금 더 정확한 추천을 위해 몇 가지만 여쭤볼게요.", "AUTH_PROMPT", 500);
@@ -146,13 +184,16 @@ export default function App() {
   function handleAuth(choice) {
     if (choice === "member") {
       addUser("회원으로 계속");
-      addBot("반갑습니다! 🙌\n기존 반려동물 정보로 바로 추천해드릴게요.\n\n*(데모 버전에서는 일반 진행과 동일하게 진행됩니다)*", "PET_TYPE");
+      addBot("반갑습니다! 🙌", null, 400);
+      setTimeout(() => goToNextStep(), 1400);
     } else if (choice === "join") {
       addUser("회원 가입 후 진행");
-      addBot("회원가입 후에는 추천 결과가 저장되고 언제든 다시 확인할 수 있어요! 😊\n\n*(데모 버전에서는 바로 진행합니다)*", "PET_TYPE");
+      addBot("회원가입 후에는 추천 결과가 저장돼요! 😊", null, 400);
+      setTimeout(() => goToNextStep(), 1400);
     } else {
       addUser("그냥 진행할게요");
-      addBot("알겠어요! 시작해볼까요.", "PET_TYPE", 400);
+      addBot("알겠어요!", null, 300);
+      setTimeout(() => goToNextStep(), 1200);
     }
   }
 
