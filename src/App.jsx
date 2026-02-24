@@ -20,7 +20,7 @@ function buildSummary(d) {
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료 추천 서비스입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
+  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료추천 서비스 **힐스 펫 플래너** 입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
   const [step, setStep]           = useState("START");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
@@ -575,14 +575,14 @@ export default function App() {
       )}
 
       <div className={`app ${chatOpen ? "chat-open" : "chat-closed"}`}>
-      <button className="chat-close-btn" onClick={() => setChatOpen(false)}>✕</button>
       <header className="header">
         <div className="header-inner">
           <img className="logo-icon" src="/bot-logo.png" alt="Pet Life Planner" />
           <div>
             <div className="header-title">Hill's Pet Planner</div>
-            <div className="header-sub">맞춤 사료 추천</div>
+            <div className="header-sub">힐스 펫 플래너</div>
           </div>
+          <button className="header-close-btn" onClick={() => setChatOpen(false)}>✕</button>
         </div>
       </header>
 
@@ -591,7 +591,6 @@ export default function App() {
       </div>
 
       <main className="chat-area">
-        <div className="divider"><span className="divider-text">상담 시작</span></div>
 
         {messages.map((m,i)=>(
           <div key={i} className={`bubble-wrap ${m.role}`}>
@@ -689,6 +688,9 @@ export default function App() {
           </div>
         )}
       </footer>
+      <button className="chat-bottom-close" onClick={() => setChatOpen(false)}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
     </div>
     </div>
   );
