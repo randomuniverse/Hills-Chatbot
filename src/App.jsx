@@ -320,7 +320,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <div className="logo-mark">🐾</div>
+          <img className="logo-mark" src="/bot-logo.png" alt="Pet Life Planner" />
           <div className="header-text">
             <div className="header-title">Pet Life Planner</div>
             <div className="header-sub">Hills Pet Nutrition</div>
@@ -341,7 +341,7 @@ export default function App() {
 
         {messages.map((m, i) => (
           <div key={i} className={`bubble-wrap ${m.role}`}>
-            {m.role === "bot" && <div className="avatar">🐾</div>}
+            {m.role === "bot" && <img className="avatar" src="/bot-logo.png" alt="bot" />}
             <div className={`bubble ${m.role}`}>
               {m.text.split("\n").map((line, j, arr) => (
                 <span key={j}>{line}{j < arr.length - 1 && <br />}</span>
@@ -352,7 +352,7 @@ export default function App() {
 
         {isTyping && (
           <div className="bubble-wrap bot">
-            <div className="avatar">🐾</div>
+            <img className="avatar" src="/bot-logo.png" alt="bot" />
             <div className="bubble bot typing">
               <span /><span /><span />
             </div>
