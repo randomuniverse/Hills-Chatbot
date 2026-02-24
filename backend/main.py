@@ -1,4 +1,4 @@
-import os, json
+import os, json, time, threading
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,6 +11,48 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
 claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
+
+_db_categories = {"dog": [], "cat": [], "last_refresh": 0}
+CATEGORY_REFRESH_INTERVAL = 300
+
+def refresh_categories():
+    try:
+        rows = supabase.table("products").select("pet_type, health_benefits").execute().data or []
+        dog_set, cat_set = set(), set()
+        for r in rows:
+            for b in (r.get("health_benefits") or []):
+                if b == "일반":
+                    continue
+                if r["pet_type"] == "dog":
+                    dog_set.add(b)
+                else:
+                    cat_set.add(b)
+        _db_categories["dog"] = sorted(dog_set)
+        _db_categories["cat"] = sorted(cat_set)
+        _db_categories["last_refresh"] = time.time()
+    except Exception as e:
+        print(f"[WARN] Failed to refresh categories from DB: {e}")
+
+def get_concerns(pet_type):
+    if time.time() - _db_categories["last_refresh"] > CATEGORY_REFRESH_INTERVAL:
+        refresh_categories()
+    return _db_categories.get(pet_type, _db_categories.get("dog", []))
+
+@app.on_event("startup")
+def on_startup():
+    refresh_categories()
+    print(f"[INFO] Loaded categories - dog: {len(_db_categories['dog'])}, cat: {len(_db_categories['cat'])}")
+
+@app.get("/api/categories")
+def get_categories():
+    if time.time() - _db_categories["last_refresh"] > CATEGORY_REFRESH_INTERVAL:
+        refresh_categories()
+    return {"dog": _db_categories["dog"], "cat": _db_categories["cat"]}
+
+@app.post("/api/refresh-categories")
+def force_refresh():
+    refresh_categories()
+    return {"dog": _db_categories["dog"], "cat": _db_categories["cat"], "refreshed_at": _db_categories["last_refresh"]}
 
 class IntentRequest(BaseModel):
     text: str
@@ -58,8 +100,8 @@ async def parse_intent(req: IntentRequest):
             '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
             "}\n\n"
             "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
-            "concerns 가능 값(강아지): 소화기 관리, 체중 관리, 관절 관리, 피부 건강, 신장 관리, 치아 관리, 요로계 관리, 식이 민감성, 심장 관리, 간 관리, 혈당, 노령 관리\n"
-            "concerns 가능 값(고양이): 소화기 관리, 체중 관리, 요로계 관리, 피부 건강, 신장 관리, 헤어볼, 치아 관리, 식이 민감성, 갑상선 관리, 실내 생활, 혈당, 노령 관리\n"
+            f"concerns 가능 값(강아지): {', '.join(get_concerns('dog'))}\n"
+            f"concerns 가능 값(고양이): {', '.join(get_concerns('cat'))}\n"
             "sympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
             "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
         )}]
@@ -73,9 +115,7 @@ async def parse_intent(req: IntentRequest):
 
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
-    dog_cats = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리"]
-    cat_cats = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리"]
-    categories = dog_cats if req.pet_type=="dog" else cat_cats
+    categories = get_concerns(req.pet_type)
 
     resp = claude.messages.create(
         model="claude-sonnet-4-20250514",

@@ -56,6 +56,13 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 12. Results displayed as product cards with rank badges, tags, links, and special warnings
 13. Save CTA with Kakao login placeholder appears after results
 
+## User Preferences
+- **Proactive suggestions**: Always suggest improvements, optimizations, and best practices without waiting for the user to ask. This is the user's project - act like a co-owner.
+- **Auto-sync with DB**: Never hardcode data that exists in Supabase. Always fetch dynamically so Supabase updates are automatically reflected without code changes.
+- **Avoid hardcoding**: Use dynamic data fetching for categories, product info, and any data that may change. Hardcoded fallbacks are OK only as backup when API fails.
+- **Non-technical user**: The project owner is not a developer. Explain technical decisions in simple terms. Proactively handle sync, naming consistency, and data alignment issues.
+- **Korean language**: The chatbot UI and all user-facing content is in Korean.
+
 ## Key Dependencies
 - Python: supabase>=2.28.0, anthropic>=0.83.0, fastapi==0.110.0, uvicorn==0.27.1
 - Node: react 18, vite 5, @vitejs/plugin-react
@@ -77,3 +84,4 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - Kitten life_stage fix: 고양이 1살 미만 → 'kitten' (DB 일치), 강아지는 'puppy' 유지
 - Enhanced product cards: food_form(건식/습식), flavor(맛), is_activbiome, product_line, description 표시
 - Supabase products table: 116개 제품 (dog 63, cat 53), 브랜드 2개 (사이언스 다이어트, 프리스크립션 다이어트)
+- Dynamic category sync: Backend fetches health_benefits from Supabase on startup (5분 캐시), frontend loads via /api/categories API. No more hardcoded concern lists.

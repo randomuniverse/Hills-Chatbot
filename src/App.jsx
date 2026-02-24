@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from "react";
 
 const DOG_BREEDS = ["믹스견","말티즈","푸들","시츄","포메라니안","치와와","비숑프리제","요크셔테리어","닥스훈트","웰시코기","비글","골든리트리버","래브라도","보더콜리","허스키","진돗개","삽살개","기타"];
 const CAT_BREEDS = ["믹스묘","코리안숏헤어","페르시안","메인쿤","브리티시숏헤어","스코티시폴드","러시안블루","시암","랙돌","아비시니안","기타"];
-const DOG_CONCERNS = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리","없음"];
-const CAT_CONCERNS = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리","없음"];
+const FALLBACK_DOG = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리"];
+const FALLBACK_CAT = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리"];
 
 const STEP_PROGRESS = {
   IDLE:0, START:5, PARSING:10, CONFIRM_PARSE:15,
@@ -31,9 +31,16 @@ export default function App() {
   const [isTyping, setIsTyping]   = useState(false);
   const [results, setResults]     = useState(null);
   const [showSave, setShowSave]   = useState(false);
+  const [dbConcerns, setDbConcerns] = useState({dog: FALLBACK_DOG, cat: FALLBACK_CAT});
   const bottomRef = useRef(null);
   const dataRef = useRef(data);
   useEffect(() => { dataRef.current = data; }, [data]);
+
+  useEffect(() => {
+    fetch("/api/categories").then(r=>r.json()).then(d=>{
+      if(d.dog?.length) setDbConcerns({dog: d.dog, cat: d.cat});
+    }).catch(()=>{});
+  }, []);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave]);
 
@@ -400,7 +407,7 @@ export default function App() {
     );
 
     if (step==="CONCERNS") {
-      const list = data.petType==="dog"?DOG_CONCERNS:CAT_CONCERNS;
+      const list = [...(data.petType==="dog"?dbConcerns.dog:dbConcerns.cat), "없음"];
       return (
         <div className="concerns-wrap">
           <div className="btn-grid-3">
