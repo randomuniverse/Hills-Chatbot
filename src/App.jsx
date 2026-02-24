@@ -412,7 +412,7 @@ export default function App() {
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">맞춤 사료 추천</div>
           </div>
-          <button className="header-badge" onClick={()=>alert("로그인 기능은 준비 중이에요!")}>로그인</button>
+          <button className="header-badge" onClick={()=>alert("로그인 기능은 준비 중이에요!")}>회원 로그인</button>
         </div>
       </header>
 
@@ -494,7 +494,7 @@ export default function App() {
           </div>
         )}
         {step!=="LOADING"&&step!=="DONE"&&(
-          <div className="input-row" style={{marginTop: 8}}>
+          <div className="input-row">
             <input className="text-input" type="text"
               placeholder="힐스와 상담하기"
               value={mainInput}

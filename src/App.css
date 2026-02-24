@@ -39,11 +39,13 @@ body {
 .app {
   width: 100%;
   max-width: 520px;
-  min-height: 100svh;
+  height: 100svh;
+  max-height: 100svh;
   display: flex;
   flex-direction: column;
   background: var(--white);
   box-shadow: 0 0 48px rgba(15,61,114,0.12);
+  overflow: hidden;
 }
 
 .header {
@@ -355,9 +357,12 @@ body {
 }
 
 .footer {
-  padding: 12px 16px 24px;
-  background: var(--white);
-  border-top: 1px solid var(--gray-200);
+  padding: 16px 16px 28px;
+  background: linear-gradient(180deg, #E8F1FB 0%, #D4E6F9 50%, #C2DAF5 100%);
+  border-top: 1px solid rgba(27,94,166,0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .btn-row {
@@ -421,6 +426,8 @@ body {
 
 .input-row {
   display: flex; gap: 8px; align-items: center;
+  padding-top: 4px;
+  border-top: 1px solid rgba(27,94,166,0.1);
 }
 .text-input {
   flex: 1;
@@ -503,19 +510,19 @@ body {
 .quick-options {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   animation: slideUp 0.3s ease;
-  padding: 0 4px;
+  padding: 0 4px 4px;
 }
 .quick-option-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 18px;
+  padding: 11px 16px;
   background: var(--white);
   border: 1.5px solid var(--gray-200);
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 500;
   font-family: 'Noto Sans KR', sans-serif;
   color: var(--text);
