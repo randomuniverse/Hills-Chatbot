@@ -185,6 +185,10 @@ export default function App() {
     const d = currentData || dataRef.current;
     const { step: nextStep, msg } = getNextStep(d);
 
+    if (nextStep === "CONCERNS" && d.healthConcerns?.length) {
+      setSelected(d.healthConcerns.filter(c => c !== "없음"));
+    }
+
     if (showSkip) {
       const known = [];
       if (d.petType) known.push(d.petType==="dog"?"🐶 강아지":"🐱 고양이");
@@ -269,9 +273,17 @@ export default function App() {
   function handleBody(val, label) {
     addUser(label);
     const updated = {...dataRef.current, bodyCondition:val};
-    setData(p=>({...p, bodyCondition:val}));
+    if (val === "overweight") {
+      const existing = updated.healthConcerns || [];
+      if (!existing.includes("체중 관리")) {
+        updated.healthConcerns = [...existing, "체중 관리"];
+      }
+    }
+    setData(p=>({...p, bodyCondition: val, healthConcerns: updated.healthConcerns || p.healthConcerns}));
     dataRef.current = updated;
-    if (updated.healthConcerns?.length) {
+    const autoConcerns = updated.healthConcerns || [];
+    if (autoConcerns.length) {
+      setSelected(autoConcerns.filter(c => c !== "없음"));
       addBot("건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요.", "CONCERNS");
     } else {
       addBot("건강 관련 고민이 있으신가요?\n버튼으로 선택하시거나 직접 입력해도 돼요.", "CONCERNS");
@@ -477,6 +489,8 @@ export default function App() {
                 className={`choice-btn small${selectedSpecial.includes(opt)?" selected":""}`}
                 onClick={()=>toggleSpecialOption(opt)}>{opt}</button>
             ))}
+            <button className={`choice-btn small ghost-inline${selectedSpecial.length===0 && !specialNotes.trim() ? " selected" : ""}`}
+              onClick={()=>handleSpecial("")}>없어요</button>
           </div>
           <div className="free-input-wrap">
             <div className="free-input-label">기타 (맛 선호, 기피 재료 등)</div>
@@ -484,10 +498,7 @@ export default function App() {
               placeholder="예: 치킨 맛 싫어해요, 연어 맛 선호해요..."
               value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
           </div>
-          <div className="btn-row">
-            <button className="next-btn" style={{flex:1}} onClick={()=>handleSpecial(specialNotes)}>다음 →</button>
-            <button className="choice-btn ghost" onClick={()=>handleSpecial("")}>없어요</button>
-          </div>
+          <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>다음 →</button>
         </div>
       );
     }

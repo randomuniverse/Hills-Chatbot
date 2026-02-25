@@ -587,6 +587,12 @@ body {
   color: var(--gray-500); box-shadow: none;
 }
 .choice-btn.ghost:hover { border-color: var(--gray-500); color: var(--gray-700); background: transparent; }
+.choice-btn.ghost-inline {
+  background: transparent; border: 1.5px dashed var(--gray-300);
+  color: var(--gray-500); box-shadow: none; grid-column: 1 / -1;
+}
+.choice-btn.ghost-inline:hover { border-color: var(--gray-400); color: var(--gray-600); }
+.choice-btn.ghost-inline.selected { border-color: var(--blue); color: var(--blue); background: rgba(27,94,166,0.06); }
 
 .concerns-wrap { display: flex; flex-direction: column; gap: 10px; }
 .next-btn {
