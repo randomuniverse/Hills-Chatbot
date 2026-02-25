@@ -112,6 +112,7 @@ async def parse_intent(req: IntentRequest):
                 "{\n"
                 '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
                 '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
+                '  "breed": "품종명(한글)" 또는 null (예: "진도개", "말티즈", "페르시안" 등),\n'
                 '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
                 '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
                 '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'

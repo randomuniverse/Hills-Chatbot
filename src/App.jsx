@@ -139,7 +139,9 @@ export default function App() {
 
       const newData = { petType: parsed.pet_type, healthConcerns: parsed.concerns||[] };
       if (parsed.age_category) newData.ageCategory = parsed.age_category;
+      if (parsed.breed) newData.breed = parsed.breed;
       setData(p=>({...p, ...newData}));
+      dataRef.current = {...dataRef.current, ...newData};
 
       const sympathyMsg = parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.";
       setIsTyping(true);
@@ -150,6 +152,7 @@ export default function App() {
         setTimeout(() => {
           const chips = [];
           if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
+          if (parsed.breed) chips.push(`🐾 ${parsed.breed}`);
           if (parsed.age_category) {
             const ageLabels = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"};
             if (ageLabels[parsed.age_category]) chips.push(`📅 ${ageLabels[parsed.age_category]}`);
