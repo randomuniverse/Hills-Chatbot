@@ -305,6 +305,9 @@ export default function App() {
   }
 
   async function handleConcernsDone() {
+    if (step !== "CONCERNS") return;
+    setStep("_PROCESSING");
+
     let finalConcerns = selected.filter(c=>c!=="없음");
 
     if (freeText.trim()) {
@@ -328,6 +331,7 @@ export default function App() {
     addUser(displayText);
     const newData = {...data, healthConcerns:finalConcerns};
     setData(newData);
+    dataRef.current = {...dataRef.current, healthConcerns:finalConcerns};
     setSelected([]); setFreeText("");
 
     addBot("거의 다 왔어요! 마지막으로 한 가지만요.\n\n다음 중 해당 사항이 있으신가요?", "SPECIAL");
@@ -338,16 +342,20 @@ export default function App() {
   }
 
   function handleSpecial(notes) {
+    if (step !== "SPECIAL") return;
+    setStep("_PROCESSING");
+
     const combined = [...selectedSpecial, ...(notes&&notes.trim()?[notes.trim()]:[])];
     const finalNotes = combined.join(", ");
     const hasNotes = finalNotes.length > 0;
     addUser(hasNotes ? finalNotes : "특이사항 없음");
+
+    const updatedData = { ...dataRef.current, specialNotes: hasNotes ? finalNotes : "" };
     setData(p => ({ ...p, specialNotes: hasNotes ? finalNotes : "" }));
+    dataRef.current = updatedData;
     setSpecial(""); setSelectedSpecial([]);
 
-    const newData = { ...data, specialNotes: hasNotes ? finalNotes : "",
-      healthConcerns: data.healthConcerns };
-    const summary = buildSummary(newData);
+    const summary = buildSummary(updatedData);
     addBot(`입력하신 내용을 정리했어요. ✅\n\n${summary}${hasNotes ? `\n특이사항: ${finalNotes}` : ""}\n\n이대로 맞춤 추천을 받으시겠어요?`, "CONFIRM");
   }
 
