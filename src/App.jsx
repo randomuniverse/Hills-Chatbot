@@ -675,7 +675,7 @@ export default function App() {
             </button>
           </div>
         )}
-        {step!=="LOADING"&&step!=="DONE"&&(
+        <div className={`input-row-wrapper ${["START","CONCERNS","SPECIAL"].includes(step) ? "visible" : ""}`}>
           <div className="input-row">
             <input className="text-input" type="text"
               placeholder="힐스와 상담하기"
@@ -686,7 +686,7 @@ export default function App() {
             />
             <button className="send-btn" onClick={handleMainInput}>→</button>
           </div>
-        )}
+        </div>
       </footer>
       </div>
 

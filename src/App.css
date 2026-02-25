@@ -600,10 +600,24 @@ body {
 }
 .next-btn:hover { background: var(--blue-dark); transform: translateY(-1px); }
 
+.input-row-wrapper {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease,
+              padding 0.35s ease;
+  padding: 0;
+}
+.input-row-wrapper.visible {
+  max-height: 60px;
+  opacity: 1;
+  padding-top: 4px;
+}
 .input-row {
   display: flex; gap: 8px; align-items: center;
-  padding-top: 4px;
   border-top: 1px solid rgba(27,94,166,0.1);
+  padding-top: 4px;
 }
 .text-input {
   flex: 1;
