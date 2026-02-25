@@ -421,7 +421,7 @@ Hills 제품 후보:
             "health_benefits": p.get("health_benefits") or [],
             "is_prescription": p.get("is_prescription",False),
             "product_url": p.get("product_url",""),
-            "image_url": _product_images.get(p.get("product_url",""), ""),
+            "image_url": _product_images.get(p.get("product_url",""), "") or _product_images.get(f"id:{p.get('id','')}", ""),
             "food_form": p.get("food_form",""),
             "flavor": p.get("flavor",""),
             "is_activbiome": p.get("is_activbiome",False),
