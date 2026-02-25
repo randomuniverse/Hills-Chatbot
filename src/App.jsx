@@ -207,7 +207,7 @@ export default function App() {
 
   function startRecommend() {
     addUser("네, 추천받을게요!");
-    addBot("좋아요! 조금 더 정확한 추천을 위해 몇 가지만 여쭤볼게요.", "AUTH_PROMPT", 500);
+    addBot("보다 정확한 추천을 위해 회원 여부를 확인합니다.", "AUTH_PROMPT", 500);
   }
 
   function handleAuth(choice) {
