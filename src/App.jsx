@@ -43,7 +43,7 @@ export default function App() {
     }).catch(()=>{});
   }, []);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave, step, selected]);
 
   function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
     const controller = new AbortController();
@@ -245,7 +245,13 @@ export default function App() {
   function handleAge(cat, label) {
     addUser(label);
     const updated = {...dataRef.current, ageCategory:cat};
-    setData(p=>({...p, ageCategory:cat}));
+    if (cat === "senior7" || cat === "senior11") {
+      const existing = updated.healthConcerns || [];
+      if (!existing.includes("노령 관리")) {
+        updated.healthConcerns = [...existing, "노령 관리"];
+      }
+    }
+    setData(p=>({...p, ageCategory:cat, healthConcerns: updated.healthConcerns || p.healthConcerns}));
     dataRef.current = updated;
     setTimeout(() => goToNextStep(updated), 400);
   }
@@ -689,7 +695,7 @@ export default function App() {
             </button>
           </div>
         )}
-        <div className={`input-row-wrapper ${["START","CONCERNS","SPECIAL"].includes(step) ? "visible" : ""}`}>
+        <div className={`input-row-wrapper ${step === "START" ? "visible" : ""}`}>
           <div className="input-row">
             <input className="text-input" type="text"
               placeholder="힐스와 상담하기"
