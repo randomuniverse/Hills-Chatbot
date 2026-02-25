@@ -420,9 +420,9 @@ export default function App() {
 
     if (step==="AUTH_PROMPT") return (
       <div className="btn-row">
-        <button className="choice-btn" onClick={()=>handleAuth("member")}>기존 회원</button>
-        <button className="choice-btn" onClick={()=>handleAuth("join")}>회원 가입</button>
-        <button className="choice-btn ghost" onClick={()=>handleAuth("skip")}>그냥 진행</button>
+        <button className="choice-btn ghost" disabled style={{opacity:0.4,cursor:"not-allowed"}} onClick={()=>handleAuth("member")}>기존 회원</button>
+        <button className="choice-btn ghost" disabled style={{opacity:0.4,cursor:"not-allowed"}} onClick={()=>handleAuth("join")}>회원 가입</button>
+        <button className="choice-btn primary" onClick={()=>handleAuth("skip")}>그냥 진행 →</button>
       </div>
     );
 
