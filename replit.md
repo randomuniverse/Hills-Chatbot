@@ -85,3 +85,4 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - Enhanced product cards: food_form(건식/습식), flavor(맛), is_activbiome, product_line, description 표시
 - Supabase products table: 116개 제품 (dog 63, cat 53), 브랜드 2개 (사이언스 다이어트, 프리스크립션 다이어트)
 - Dynamic category sync: Backend fetches health_benefits from Supabase on startup (5분 캐시), frontend loads via /api/categories API. No more hardcoded concern lists.
+- Breed comment feature: Claude generates short 2-sentence comment about selected breed (traits + personality) via /api/breed-comment, displayed before age step for richer UX

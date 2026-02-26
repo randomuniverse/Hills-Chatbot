@@ -234,11 +234,31 @@ export default function App() {
     setTimeout(() => goToNextStep(updated), 400);
   }
 
-  function handleBreed(breed) {
+  async function handleBreed(breed) {
     addUser(breed);
     const updated = {...dataRef.current, breed};
     setData(p=>({...p, breed}));
     dataRef.current = updated;
+
+    setIsTyping(true);
+    try {
+      const res = await fetchWithTimeout("/api/breed-comment", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ breed, pet_type: updated.petType })
+      }, 10000);
+      const d = await res.json();
+      setIsTyping(false);
+      if (d.comment) {
+        setMessages(p=>[...p,{role:"bot",text:d.comment}]);
+        setTimeout(() => goToNextStep(updated), 1600);
+        return;
+      }
+    } catch(e) {
+      setIsTyping(false);
+      console.log("breed-comment skip:", e);
+    }
+
     setTimeout(() => goToNextStep(updated), 400);
   }
 
