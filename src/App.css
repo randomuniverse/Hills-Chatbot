@@ -612,6 +612,7 @@ body {
 .choice-btn.ghost-inline.selected { border-color: var(--blue); color: var(--blue); background: rgba(27,94,166,0.06); }
 
 .concerns-wrap { display: flex; flex-direction: column; gap: 10px; }
+.concerns-wrap.special-bottom { justify-content: flex-end; flex: 1; }
 .next-btn {
   background: var(--blue); color: var(--white);
   border: none; padding: 13px;

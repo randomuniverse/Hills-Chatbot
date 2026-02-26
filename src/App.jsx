@@ -534,21 +534,15 @@ export default function App() {
         );
       }
       return (
-        <div className="concerns-wrap">
+        <div className="concerns-wrap special-bottom">
           <div className="btn-grid-2">
             {specialOpts.map(opt=>(
               <button key={opt}
                 className={`choice-btn small${selectedSpecial.includes(opt)?" selected":""}`}
                 onClick={()=>toggleSpecialOption(opt)}>{opt}</button>
             ))}
-            <button className="choice-btn small ghost-inline"
+            <button className="choice-btn small"
               onClick={()=>setShowSpecialInput(true)}>직접 입력 ✏️</button>
-          </div>
-          <div className="free-input-wrap">
-            <div className="free-input-label">기타 (맛 선호, 기피 재료 등)</div>
-            <textarea className="free-input"
-              placeholder="예: 치킨 맛 싫어해요, 연어 맛 선호해요..."
-              value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
           </div>
           <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>
             {selectedSpecial.length>0 || specialNotes.trim() ? "다음 →" : "특별사항 없어요 →"}
