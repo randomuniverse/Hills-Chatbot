@@ -71,7 +71,7 @@ const T = {
     done:(n,r)=>`<div class="done-banner">분석 완료! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}아래에서 ${n}에게 딱 맞는 Hill's 제품을 확인해보세요.`,
     timeout:"응답 시간이 초과되었어요. 🔄 다시 추천받기를 눌러주세요.",
     error:"일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.",
-    retry:"🔄 다시 추천받기", petName:"반려동물",
+    retry:"다시 추천받기", petName:"반려동물",
     rxBadge:"처방식", flavorSfx:"맛", viewHills:"Hill's 공식 사이트에서 보기 →",
     browseMore:"다른 힐스 제품도 둘러보세요",
     bestP:"베스트 제품", newP:"신제품", storeP:"힐스 공식 브랜드 스토어",
@@ -128,7 +128,7 @@ const T = {
     done:(n,r)=>`<div class="done-banner">Analysis Complete! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}Check out the perfect Hill's products for ${n} below.`,
     timeout:"Response timed out. 🔄 Please try again.",
     error:"A temporary error occurred. Please try again shortly.",
-    retry:"🔄 Try again", petName:"your pet",
+    retry:"Try again", petName:"your pet",
     rxBadge:"Rx", flavorSfx:"", viewHills:"View on Hill's Official Site →",
     browseMore:"Explore more Hill's products",
     bestP:"Best Sellers", newP:"New Products", storeP:"Hill's Official Store",
@@ -811,15 +811,14 @@ export default function App() {
     }
 
     if (step==="CONFIRM") return (
-      <div className="btn-row">
-        <button className="choice-btn primary" onClick={handleConfirm}>{t.confirmBtn}</button>
-        <button className="choice-btn ghost" onClick={handleRestart}>{t.startOver}</button>
+      <div className="btn-row" style={{justifyContent:"center"}}>
+        <button className="choice-btn primary" style={{width:"80%",maxWidth:"300px"}} onClick={handleConfirm}>{t.confirmBtn}</button>
       </div>
     );
 
     if (step==="DONE") return (
-      <div className="btn-row">
-        <button className="choice-btn" onClick={handleRestart}>{t.retry}</button>
+      <div className="btn-row" style={{justifyContent:"center",flex:1,alignItems:"center"}}>
+        <button className="choice-btn" style={{minWidth:"160px",textAlign:"center"}} onClick={handleRestart}>{t.retry}</button>
       </div>
     );
 
