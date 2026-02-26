@@ -223,6 +223,23 @@ export default function App() {
     } catch {}
   }
 
+  function playTick() {
+    try {
+      const ctx = getAudioCtx();
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 1200;
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.04);
+    } catch {}
+  }
+
   function playClose() {
     try {
       const ctx = getAudioCtx();
@@ -418,6 +435,7 @@ export default function App() {
 
   function handleAuth(choice) {
     if (step !== "AUTH_PROMPT") return;
+    playTick();
     setStep("_PROCESSING");
     if (choice === "member") {
       addUser(t.authMemberU);
@@ -436,6 +454,7 @@ export default function App() {
 
   function handlePetType(type) {
     if (step !== "PET_TYPE") return;
+    playTick();
     setStep("_PROCESSING");
     addUser(type==="dog"?t.dog:t.cat);
     const updated = {...dataRef.current, petType:type};
@@ -446,6 +465,7 @@ export default function App() {
 
   async function handleBreed(breed) {
     if (step !== "BREED") return;
+    playTick();
     addUser(bd(breed));
     setStep("_WAIT");
     const autoSize = BREED_SIZE[breed] || "all";
@@ -477,6 +497,7 @@ export default function App() {
 
   function handleAge(cat, label) {
     if (step !== "AGE") return;
+    playTick();
     setStep("_PROCESSING");
     addUser(label);
     const updated = {...dataRef.current, ageCategory:cat};
@@ -494,6 +515,7 @@ export default function App() {
 
   function handleBody(val, label) {
     if (step !== "BODY") return;
+    playTick();
     setStep("_PROCESSING");
     addUser(label);
     const updated = {...dataRef.current, bodyCondition:val};
@@ -516,6 +538,7 @@ export default function App() {
 
   function toggleConcern(c) {
     if (c==="없음") return;
+    playTick();
     setSelected(p => {
       return p.includes(c)?p.filter(x=>x!==c):[...p,c];
     });
@@ -555,6 +578,7 @@ export default function App() {
   }
 
   function toggleSpecialOption(opt) {
+    playTick();
     setSelectedSpecial(p => p.includes(opt) ? p.filter(x=>x!==opt) : [...p, opt]);
   }
 
@@ -665,6 +689,7 @@ export default function App() {
   }
 
   function handleRestart() {
+    playOpen();
     setMessages([{role:"bot", text:t.greeting}]);
     setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]); setShowSpecialInput(false);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
@@ -887,7 +912,7 @@ export default function App() {
         {messages.map((m,i)=>{
           const isDone = m.role==="bot" && m.text.includes("done-banner");
           return (
-          <div key={i} className={`bubble-wrap ${m.role}`} ref={isDone?doneRef:null}>
+          <div key={i} className={`bubble-wrap ${m.role}${isDone?" done-wrap":""}`} ref={isDone?doneRef:null}>
             {m.role==="bot"&&<img className="avatar" src="/bot-avatar.png" alt="bot" />}
             <div className={`bubble ${m.role}${isDone?" done-bubble":""}`}>
               <BubbleText text={m.text}/>
