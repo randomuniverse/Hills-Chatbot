@@ -179,24 +179,12 @@ async def classify_concerns(req: ClassifyRequest):
 
 @app.post("/api/breed-comment")
 async def breed_comment(req: BreedCommentRequest):
-    pet_label = "강아지" if req.pet_type == "dog" else "고양이"
+    import random
     try:
-        resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=150,
-            system="반려동물 전문가. 친근하고 따뜻한 말투. 짧게 답변.",
-            messages=[{"role":"user","content":(
-                f"{pet_label} 품종 '{req.breed}'에 대해 두 문장으로 짧은 코멘트를 해줘.\n"
-                f"첫 문장: 이 품종의 장점이나 매력 포인트 (예: 충성심, 영리함, 귀여움 등)\n"
-                f"두번째 문장: 이 품종의 잘 알려진 성격적 특징이나 많은 보호자들이 공감하는 포인트 (예: 예민함, 식탐, 고집 등)\n"
-                f"'기타' 또는 '믹스견'이면 각각에 맞는 일반적이고 따뜻한 코멘트를 해줘.\n"
-                f"반드시 두 문장만. 이모지 1-2개 포함. 존댓말로."
-            )}]
-        )
-        comment = resp.content[0].text.strip()
-        return {"comment": comment}
-    except anthropic.APITimeoutError:
-        logger.error("breed-comment: Claude API timeout")
+        result = supabase.table("breed_comments").select("comment").eq("pet_type", req.pet_type).eq("breed", req.breed).execute()
+        if result.data:
+            chosen = random.choice(result.data)
+            return {"comment": chosen["comment"]}
         return {"comment": ""}
     except Exception as e:
         logger.error(f"breed-comment error: {e}")
