@@ -491,7 +491,7 @@ body {
 }
 .card-link:hover { background: var(--blue); color: var(--white); }
 
-.bubble-wrap.done-wrap { margin-top: 12px; }
+.bubble-wrap.done-wrap { padding-top: 24px; }
 .bubble.bot.done-bubble {
   background: var(--blue-dark) !important;
   color: rgba(255,255,255,0.95) !important;

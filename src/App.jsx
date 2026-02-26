@@ -288,15 +288,7 @@ export default function App() {
   const doneRef = useRef(null);
   useEffect(() => {
     if (step === "DONE" && results) {
-      setTimeout(() => {
-        if (doneRef.current) {
-          const container = doneRef.current.closest(".chat-area");
-          if (container) {
-            const offset = Math.max(0, doneRef.current.offsetTop - 16);
-            container.scrollTo({ top: offset, behavior: "smooth" });
-          }
-        }
-      }, 300);
+      setTimeout(() => doneRef.current?.scrollIntoView({ behavior:"smooth", block:"start" }), 300);
     } else {
       bottomRef.current?.scrollIntoView({ behavior:"smooth" });
     }
