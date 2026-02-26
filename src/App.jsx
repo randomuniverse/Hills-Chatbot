@@ -337,10 +337,9 @@ export default function App() {
   }
 
   function toggleConcern(c) {
-    if (c==="없음") { setSelected(["없음"]); return; }
+    if (c==="없음") return;
     setSelected(p => {
-      const f = p.filter(x=>x!=="없음");
-      return f.includes(c)?f.filter(x=>x!==c):[...f,c];
+      return p.includes(c)?p.filter(x=>x!==c):[...p,c];
     });
   }
 
@@ -348,7 +347,7 @@ export default function App() {
     if (step !== "CONCERNS") return;
     setStep("_PROCESSING");
 
-    let finalConcerns = selected.filter(c=>c!=="없음");
+    let finalConcerns = [...selected];
 
     if (freeText.trim()) {
       try {
@@ -501,7 +500,7 @@ export default function App() {
     );
 
     if (step==="CONCERNS") {
-      const list = [...(data.petType==="dog"?dbConcerns.dog:dbConcerns.cat), "없음"];
+      const list = data.petType==="dog"?dbConcerns.dog:dbConcerns.cat;
       return (
         <div className="concerns-wrap">
           <div className="btn-grid-3">
@@ -511,7 +510,9 @@ export default function App() {
                 onClick={()=>toggleConcern(c)}>{c}</button>
             ))}
           </div>
-          <button className="next-btn" onClick={handleConcernsDone}>다음 →</button>
+          <button className="next-btn" onClick={handleConcernsDone}>
+            {selected.length>0 ? "다음 →" : "건강고민 없어요 →"}
+          </button>
         </div>
       );
     }
@@ -530,6 +531,7 @@ export default function App() {
             <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>
               {specialNotes.trim() ? "입력 완료 →" : "특별사항 없어요 →"}
             </button>
+            <button className="back-to-btns" onClick={()=>{setShowSpecialInput(false);}}>← 버튼으로 선택하기</button>
           </div>
         );
       }
@@ -541,7 +543,7 @@ export default function App() {
                 className={`choice-btn small${selectedSpecial.includes(opt)?" selected":""}`}
                 onClick={()=>toggleSpecialOption(opt)}>{opt}</button>
             ))}
-            <button className="choice-btn small"
+            <button className="choice-btn small special-direct-input"
               onClick={()=>setShowSpecialInput(true)}>직접 입력 ✏️</button>
           </div>
           <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>

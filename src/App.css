@@ -613,6 +613,12 @@ body {
 
 .concerns-wrap { display: flex; flex-direction: column; gap: 10px; }
 .concerns-wrap.special-bottom { justify-content: flex-end; flex: 1; }
+.special-direct-input { grid-column: 1 / -1 !important; }
+.back-to-btns {
+  background: none; border: none; color: var(--gray-500);
+  font-size: 12px; cursor: pointer; padding: 4px 0; text-align: center;
+}
+.back-to-btns:hover { color: var(--blue); }
 .next-btn {
   background: var(--blue); color: var(--white);
   border: none; padding: 13px;
