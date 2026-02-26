@@ -781,7 +781,7 @@ export default function App() {
   return (
     <div className="demo-wrapper">
       <div className="demo-bg">
-        <img src="/hills-site-bg.png" alt="Hills Pet Nutrition" className="demo-bg-img" />
+        <img src={lang==="en"?"/hills-site-bg-en.png":"/hills-site-bg.png"} alt="Hills Pet Nutrition" className="demo-bg-img" />
       </div>
 
       {!chatOpen && (
