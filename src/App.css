@@ -100,10 +100,10 @@ body {
 }
 
 .chat-fab-icon {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .app {
@@ -190,7 +190,7 @@ body {
     border-radius: 0;
   }
   .chat-fab { bottom: 16px; right: 16px; width: 56px; height: 56px; }
-  .chat-fab-icon { width: 34px; height: 34px; }
+  .chat-fab-icon { width: 44px; height: 44px; }
   .header { padding: 0 14px; height: 56px; }
   .logo-icon { width: 30px; height: 30px; }
   .header-title { font-size: 14px; }
