@@ -2,13 +2,20 @@ import { useState, useEffect, useRef } from "react";
 
 const DOG_BREEDS = ["믹스견","말티즈","푸들","시츄","포메라니안","치와와","비숑프리제","요크셔테리어","닥스훈트","웰시코기","비글","골든리트리버","래브라도","보더콜리","허스키","진돗개","삽살개","기타"];
 const CAT_BREEDS = ["믹스묘","코리안숏헤어","페르시안","메인쿤","브리티시숏헤어","스코티시폴드","러시안블루","시암","랙돌","아비시니안","기타"];
+const BREED_SIZE = {
+  "말티즈":"small","시츄":"small","포메라니안":"small","치와와":"small",
+  "비숑프리제":"small","요크셔테리어":"small","닥스훈트":"small",
+  "푸들":"all","웰시코기":"all","비글":"all","믹스견":"all","기타":"all",
+  "골든리트리버":"large","래브라도":"large","보더콜리":"large",
+  "허스키":"large","진돗개":"large","삽살개":"large",
+};
 const FALLBACK_DOG = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리"];
 const FALLBACK_CAT = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리"];
 
 const STEP_PROGRESS = {
   IDLE:0, START:5, PARSING:10, CONFIRM_PARSE:15,
   AUTH_PROMPT:20, PET_TYPE:25, BREED:38, AGE:50,
-  WEIGHT:62, BODY:72, CONCERNS:82, SPECIAL:90, CONFIRM:95,
+  BODY:65, CONCERNS:78, SPECIAL:90, CONFIRM:95,
   LOADING:98, DONE:100
 };
 
@@ -109,7 +116,7 @@ export default function App() {
 
     if (handleContextInput(txt)) return;
 
-    const fallbackSteps = ["PARSING","CONFIRM_PARSE","AUTH_PROMPT","PET_TYPE","BREED","AGE","WEIGHT","BODY","CONCERNS","SPECIAL","LOADING","DONE","CONFIRM"];
+    const fallbackSteps = ["PARSING","CONFIRM_PARSE","AUTH_PROMPT","PET_TYPE","BREED","AGE","BODY","CONCERNS","SPECIAL","LOADING","DONE","CONFIRM"];
     if (step !== "START" && fallbackSteps.includes(step)) {
       try {
         const res = await fetchWithTimeout("/api/chat-fallback", {
@@ -197,7 +204,7 @@ export default function App() {
     if (!d.petType) return { step: "PET_TYPE", msg: "반려동물 종류를 선택해주세요." };
     if (!d.breed) return { step: "BREED", msg: `${d.petType==="dog"?"강아지":"고양이"} 품종을 선택해주세요.` };
     if (!d.ageCategory) return { step: "AGE", msg: "나이대를 알려주세요." };
-    if (!d.sizeClass && d.petType==="dog") return { step: "WEIGHT", msg: "체급을 선택해주세요." };
+    
     if (!d.bodyCondition) return { step: "BODY", msg: "체형 상태는 어떤가요?" };
     if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: "건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요." };
     return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요." };
@@ -259,8 +266,9 @@ export default function App() {
   async function handleBreed(breed) {
     addUser(breed);
     setStep("_WAIT");
-    const updated = {...dataRef.current, breed};
-    setData(p=>({...p, breed}));
+    const autoSize = BREED_SIZE[breed] || "all";
+    const updated = {...dataRef.current, breed, sizeClass: autoSize};
+    setData(p=>({...p, breed, sizeClass: autoSize}));
     dataRef.current = updated;
 
     setIsTyping(true);
@@ -299,13 +307,6 @@ export default function App() {
     setTimeout(() => goToNextStep(updated), 400);
   }
 
-  function handleSizeClass(sizeClass, label) {
-    addUser(label);
-    const updated = {...dataRef.current, sizeClass};
-    setData(p=>({...p, sizeClass}));
-    dataRef.current = updated;
-    setTimeout(() => goToNextStep(updated), 400);
-  }
 
   function handleBody(val, label) {
     addUser(label);
@@ -479,20 +480,6 @@ export default function App() {
         {[["puppy","1살 미만"],["adult","1~7살"],["senior7","7~11살"],["senior11","11살 이상"]].map(([v,l])=>(
           <button key={v} className="choice-btn" onClick={()=>handleAge(v,l)}>{l}</button>
         ))}
-      </div>
-    );
-
-    if (step==="WEIGHT") return (
-      <div className="btn-row" style={{flexWrap:"wrap"}}>
-        {data.petType==="dog" ? (
-          <>
-            <button className="choice-btn" onClick={()=>handleSizeClass("small","🐕 소형견 (10kg 미만)")}>🐕 소형견<br/><span style={{fontSize:"0.75em",opacity:0.7}}>10kg 미만</span></button>
-            <button className="choice-btn" onClick={()=>handleSizeClass("all","🐕 중형견 (10~25kg)")}>🐕 중형견<br/><span style={{fontSize:"0.75em",opacity:0.7}}>10~25kg</span></button>
-            <button className="choice-btn" onClick={()=>handleSizeClass("large","🐕 대형견 (25kg 이상)")}>🐕 대형견<br/><span style={{fontSize:"0.75em",opacity:0.7}}>25kg 이상</span></button>
-          </>
-        ) : (
-          <button className="choice-btn" onClick={()=>handleSizeClass("all","🐱 선택 완료")}>🐱 다음으로</button>
-        )}
       </div>
     );
 
@@ -723,7 +710,7 @@ export default function App() {
 
       <footer className="footer">
         {step!=="LOADING"&&step!=="START"&&renderButtons()}
-        {["PET_TYPE","BREED","AGE","WEIGHT","BODY","CONCERNS","SPECIAL","CONFIRM"].includes(step)&&(
+        {["PET_TYPE","BREED","AGE","BODY","CONCERNS","SPECIAL","CONFIRM"].includes(step)&&(
           <button className="restart-link" onClick={handleRestart}>↩ 처음부터 다시 하기</button>
         )}
         {step==="START"&&!isTyping&&messages.length>0&&(
