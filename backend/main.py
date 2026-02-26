@@ -193,59 +193,6 @@ async def breed_comment(req: BreedCommentRequest):
         logger.error(f"breed-comment error: {e}")
         return {"comment": ""}
 
-class ChatFallbackRequest(BaseModel):
-    text: str
-    current_step: str
-
-@app.post("/api/chat-fallback")
-async def chat_fallback(req: ChatFallbackRequest):
-    step_context = {
-        "CONFIRM_PARSE": "보호자의 고민을 파악한 후 맞춤 추천을 시작할지 확인 중",
-        "AUTH_PROMPT": "회원 여부 확인 단계",
-        "PET_TYPE": "반려동물 종류(강아지/고양이) 선택 단계",
-        "BREED": "품종 선택 단계",
-        "AGE": "나이 선택 단계",
-        "WEIGHT": "체중 입력 단계",
-        "BODY": "체형 선택 단계",
-        "CONCERNS": "건강 고민 선택 단계",
-        "SPECIAL": "특이사항(임신/약물/수술) 입력 단계",
-        "CONFIRM": "입력 내용 최종 확인 단계",
-    }
-    ctx = step_context.get(req.current_step, "맞춤 사료 추천 진행 중")
-
-    try:
-        resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=200,
-            system=(
-                "당신은 Hills Pet Nutrition 맞춤 사료 추천 챗봇입니다. "
-                "보호자와 대화 중이며, 현재 추천 절차를 진행하고 있습니다. "
-                "보호자의 메시지를 맥락에 맞게 이해하세요. 예를 들어:\n"
-                "- '이미 힐스 사료를 먹이고 있는데 더 잘 맞는 걸 찾고 싶다' → 공감하고 추천 진행을 안내\n"
-                "- '네', '응', '좋아' 같은 긍정 → 현재 단계에 맞는 진행 안내\n"
-                "- 사진/이미지 전송 요청 → '죄송합니다, 현재 이미지 분석 기능은 지원하지 않아요 📷 대신 텍스트로 반려동물의 상태나 증상을 설명해주시면 맞춤 추천을 도와드릴게요!'\n"
-                "- 반려동물/사료와 전혀 관련 없는 이야기 → '힐스 펫 플래너는 맞춤 사료 추천에 특화되어 있어요! 다른 궁금한 점이 있으신가요?'\n"
-                "반말이나 존댓말 모두 자연스럽게 대응하며, 항상 친절하고 짧게(1~3문장) 한국어로 답하세요. "
-                "가능하면 현재 진행 단계로 돌아갈 수 있도록 자연스럽게 유도하세요."
-            ),
-            messages=[{"role":"user","content":(
-                f"[현재 단계: {ctx}]\n"
-                f"보호자 메시지: \"{req.text}\"\n\n"
-                "이 메시지에 맥락을 파악하여 적절하게 응답하세요. "
-                "보호자가 사료나 반려동물에 대해 이야기하면 공감하고 추천 절차를 계속 진행하도록 안내하세요. "
-                "반려동물 사료/건강과 완전히 관련 없는 이야기에만 부드럽게 안내하세요. "
-                "JSON 아님, 자연스러운 한국어 문장으로만 답하세요."
-            )}]
-        )
-        reply = resp.content[0].text.strip()
-        return {"reply": reply}
-    except anthropic.APITimeoutError:
-        logger.error("chat-fallback: Claude API timeout")
-        return {"reply": "잠시 응답이 지연되고 있어요. 추천을 계속 진행해볼까요?"}
-    except Exception as e:
-        logger.error(f"chat-fallback error: {e}")
-        return {"reply": "힐스 펫 플래너는 맞춤 사료 추천에 특화되어 있어요! 추천을 계속 진행해볼까요?"}
-
 @app.post("/api/parse-special")
 async def parse_special(req: ParseSpecialRequest):
     try:
@@ -444,7 +391,7 @@ Hills 제품 후보:
             "health_benefits": p.get("health_benefits") or [],
             "is_prescription": p.get("is_prescription",False),
             "product_url": p.get("product_url",""),
-            "image_url": _product_images.get(p.get("product_url",""), "") or _product_images.get(f"id:{p.get('id','')}", ""),
+            "image_url": _product_images.get(p.get("product_url",""), ""),
             "food_form": p.get("food_form",""),
             "flavor": p.get("flavor",""),
             "is_activbiome": p.get("is_activbiome",False),

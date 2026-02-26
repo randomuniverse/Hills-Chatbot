@@ -12,13 +12,6 @@ const BREED_SIZE = {
 const FALLBACK_DOG = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리"];
 const FALLBACK_CAT = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리"];
 
-const STEP_PROGRESS = {
-  IDLE:0, START:5, PARSING:10, CONFIRM_PARSE:15,
-  AUTH_PROMPT:20, PET_TYPE:25, BREED:38, AGE:50,
-  BODY:65, CONCERNS:78, SPECIAL:90, CONFIRM:95,
-  LOADING:98, DONE:100
-};
-
 function buildSummary(d) {
   const age = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory]||"";
   const body = {underweight:"마름",normal:"정상",overweight:"과체중"}[d.bodyCondition]||"";
@@ -164,22 +157,6 @@ export default function App() {
     setMainInput("");
 
     if (handleContextInput(txt)) return;
-
-    const fallbackSteps = ["PARSING","CONFIRM_PARSE","AUTH_PROMPT","PET_TYPE","BREED","AGE","BODY","CONCERNS","SPECIAL","LOADING","DONE","CONFIRM"];
-    if (step !== "START" && fallbackSteps.includes(step)) {
-      try {
-        const res = await fetchWithTimeout("/api/chat-fallback", {
-          method:"POST",
-          headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({ text: txt, current_step: step })
-        });
-        const d = await res.json();
-        addBot(d.reply || "힐스 펫 플래너는 맞춤 사료 추천에 특화되어 있어요! 추천을 계속 진행해볼까요?");
-      } catch {
-        addBot("죄송해요, 잠시 오류가 있었어요. 추천을 계속 진행해볼까요?");
-      }
-      return;
-    }
 
     if (step !== "START") return;
 
@@ -691,10 +668,6 @@ export default function App() {
         </div>
       </header>
 
-      <div className="progress-bar">
-        <div className="progress-fill" style={{width:`${STEP_PROGRESS[step]||0}%`}}/>
-      </div>
-
       <main className="chat-area">
 
         {messages.map((m,i)=>{
@@ -787,7 +760,6 @@ export default function App() {
               value={mainInput}
               onChange={e=>setMainInput(e.target.value)}
               onKeyDown={e=>{if(e.key==="Enter"&&(e.shiftKey||!e.nativeEvent.isComposing)){e.preventDefault();handleMainInput();}}}
-              onCompositionEnd={e=>{}}
             />
             <button className="send-btn" onClick={handleMainInput}>→</button>
           </div>

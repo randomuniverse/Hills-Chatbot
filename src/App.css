@@ -262,17 +262,6 @@ body {
 }
 .header-badge:hover { background: rgba(255,255,255,0.25); }
 
-.progress-bar {
-  height: 0px;
-  background: var(--gray-200);
-  display: none;
-}
-.progress-fill {
-  height: 100%;
-  background: var(--blue-mid);
-  transition: width 0.45s ease;
-}
-
 .chat-area {
   flex: 1;
   overflow-y: auto;
