@@ -12,15 +12,159 @@ const BREED_SIZE = {
 const FALLBACK_DOG = ["소화기 관리","체중 관리","관절 관리","피부 건강","신장 관리","치아 관리","요로계 관리","식이 민감성","심장 관리","간 관리","혈당","노령 관리"];
 const FALLBACK_CAT = ["소화기 관리","체중 관리","요로계 관리","피부 건강","신장 관리","헤어볼","치아 관리","식이 민감성","갑상선 관리","실내 생활","혈당","노령 관리"];
 
-function buildSummary(d) {
-  const age = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory]||"";
-  const body = {underweight:"마름",normal:"정상",overweight:"과체중"}[d.bodyCondition]||"";
-  const sizeText = {small:"소형",all:"중형",large:"대형"}[d.sizeClass]||"";
-  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체급 ${sizeText} · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
+const BREED_EN = {
+  "믹스견":"Mixed","말티즈":"Maltese","푸들":"Poodle","시츄":"Shih Tzu",
+  "포메라니안":"Pomeranian","치와와":"Chihuahua","비숑프리제":"Bichon Frise",
+  "요크셔테리어":"Yorkie","닥스훈트":"Dachshund","웰시코기":"Corgi",
+  "비글":"Beagle","골든리트리버":"Golden Retriever","래브라도":"Labrador",
+  "보더콜리":"Border Collie","허스키":"Husky","진돗개":"Jindo","삽살개":"Sapsali","기타":"Other",
+  "믹스묘":"Mixed","코리안숏헤어":"Korean Shorthair","페르시안":"Persian",
+  "메인쿤":"Maine Coon","브리티시숏헤어":"British Shorthair","스코티시폴드":"Scottish Fold",
+  "러시안블루":"Russian Blue","시암":"Siamese","랙돌":"Ragdoll","아비시니안":"Abyssinian",
+};
+const CONCERN_EN = {
+  "소화기 관리":"Digestive","체중 관리":"Weight","관절 관리":"Joint",
+  "피부 건강":"Skin","신장 관리":"Kidney","치아 관리":"Dental",
+  "요로계 관리":"Urinary","식이 민감성":"Sensitivity","심장 관리":"Heart",
+  "간 관리":"Liver","혈당":"Blood Sugar","노령 관리":"Senior Care",
+  "헤어볼":"Hairball","갑상선 관리":"Thyroid","실내 생활":"Indoor",
+};
+
+const T = {
+  ko: {
+    headerSub:"힐스 펫 플래너",
+    greeting:'안녕하세요! <span class="wave">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!',
+    cta:"힐스 맞춤 제품 추천 받기", placeholder:"힐스와 상담하기",
+    dog:"🐶 강아지", cat:"🐱 고양이",
+    ages:{puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"},
+    body:{underweight:"🔻 마름",normal:"✅ 정상",overweight:"🔺 과체중"},
+    bodyLabel:{underweight:"마름",normal:"정상",overweight:"과체중"},
+    size:{small:"소형",all:"중형",large:"대형"}, sizeWord:"체급", bodyWord:"체형",
+    concernsWord:"건강 고민", none:"없음",
+    startUser:"맞춤 사료 추천받기", startBot:"시작해볼게요! 먼저 회원 여부를 확인할게요.",
+    yesStart:"네, 시작할게요 →", startOver:"처음부터",
+    restartConfirm:"알겠어요! 처음부터 차근차근 진행할게요.",
+    authPrompt:"보다 정확한 추천을 위해 회원 여부를 확인합니다.",
+    authMember:"기존 회원", authJoin:"회원 가입", authSkip:"그냥 진행 →",
+    authMemberU:"회원으로 계속", authMemberB:"반갑습니다! 🙌",
+    authJoinU:"회원 가입 후 진행", authJoinB:"회원가입 후에는 추천 결과가 저장돼요! 😊",
+    authSkipU:"그냥 진행할게요", authSkipB:"알겠어요!",
+    pickPet:"반려동물 종류를 선택해주세요.",
+    pickBreed:(pt)=>`${pt==="dog"?"강아지":"고양이"} 품종을 선택해주세요.`,
+    pickAge:"나이대를 알려주세요.", pickBody:"체형 상태는 어떤가요?",
+    pickConcerns:"건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요.",
+    editConcerns:"건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요.",
+    fast:(m)=>`이미 파악한 정보가 있어서 빠르게 진행할게요! 😊\n${m}`,
+    next:"다음 →", noConcern:"건강고민 없어요 →",
+    specialQ:"거의 다 왔어요! 마지막으로 한 가지만요.\n\n다음 중 해당 사항이 있으신가요?",
+    spPreg:"임신/수유 중", spSurg:"수술 후 회복 중 / 약 복용 중",
+    spAllergy:"알레르기 있음", spRx:"처방식 먹는 중", spDirect:"직접 입력 ✏️",
+    spLabel:"특이사항을 자유롭게 입력해주세요",
+    spPlaceholder:"예: 치킨 맛 싫어해요, 연어 맛 선호해요, 알레르기가 있어요...",
+    spDone:"입력 완료 →", spNone:"특별사항 없어요 →", spBack:"← 버튼으로 선택하기",
+    spNoneUser:"특이사항 없음", spNoteWord:"특이사항",
+    summaryPre:"입력하신 내용을 정리했어요. ✅", confirmQ:"이대로 맞춤 추천을 받으시겠어요?",
+    confirmBtn:"✨ 맞춤 추천받기", confirmU:"네, 추천받을게요 ✨", recommendU:"네, 추천받을게요!",
+    analyzing:"분석 중이에요... 잠시만 기다려주세요 🔍",
+    analyzingLabel:"맞춤 제품을 분석하고 있어요",
+    done:(n,r)=>`<div class="done-banner">분석 완료! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}아래에서 ${n}에게 딱 맞는 Hill's 제품을 확인해보세요.`,
+    timeout:"응답 시간이 초과되었어요. 🔄 다시 추천받기를 눌러주세요.",
+    error:"일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.",
+    retry:"🔄 다시 추천받기", petName:"반려동물",
+    rxBadge:"처방식", flavorSfx:"맛", viewHills:"Hill's 공식 사이트에서 보기 →",
+    browseMore:"다른 힐스 제품도 둘러보세요",
+    bestP:"베스트 제품", newP:"신제품", storeP:"힐스 공식 브랜드 스토어",
+    bestUrl:"https://brand.naver.com/hillspet/best?cp=1",
+    newUrl:"https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1",
+    storeUrl:"https://brand.naver.com/hillspet",
+    saveQ:"결과를 저장해두시겠어요?",
+    saveSub:"회원가입 시 추천 결과를 언제든 다시 확인할 수 있어요.",
+    kakao:"💬 카카오로 1초 가입", kakaoAlert:"카카오 로그인은 준비 중이에요!", skipSave:"다음에 할게요",
+    restartLink:"↩ 처음부터 다시 하기",
+    notRelevant:"안녕하세요! 저는 **Hill's Pet Planner** 맞춤 사료 추천 봇이에요. 🐾\n\n아래와 같은 도움을 드릴 수 있어요:\n• 반려동물 건강 고민에 맞는 **맞춤 사료 추천**\n• 강아지/고양이 **영양 상담**\n• Hill's 제품 정보 안내\n\n반려동물에 대해 궁금한 점이 있으시면 편하게 말씀해 주세요!",
+    noInfoSfx:"\n\n궁금한 점이 있으시면 편하게 말씀해 주세요!\n아래 **제품 추천 받기** 버튼을 눌러 시작하실 수도 있어요.",
+    parsed:"파악한 내용이에요.", parsedSfx:"\n\n맞춤 추천을 시작할까요?",
+    parseErr:"말씀 잘 들었어요! 몇 가지 정보를 더 알려주시면 정확하게 추천해드릴게요.",
+    defSympathy:"말씀해주신 내용을 확인했어요.",
+    defGreeting:"안녕하세요! 반려동물 영양 상담을 위해 찾아주셔서 감사합니다 😊",
+  },
+  en: {
+    headerSub:"AI Pet Nutrition Advisor",
+    greeting:'Hello! <span class="wave">👋</span>\nI\'m the **Hill\'s Pet Planner**, your AI pet nutrition advisor.\nLet me find the perfect product for your pet!',
+    cta:"Get Personalized Recommendation", placeholder:"Chat with Hill's",
+    dog:"🐶 Dog", cat:"🐱 Cat",
+    ages:{puppy:"Under 1 yr",adult:"1–7 yrs",senior7:"7–11 yrs",senior11:"11+ yrs"},
+    body:{underweight:"🔻 Thin",normal:"✅ Normal",overweight:"🔺 Overweight"},
+    bodyLabel:{underweight:"Thin",normal:"Normal",overweight:"Overweight"},
+    size:{small:"Small",all:"Medium",large:"Large"}, sizeWord:"Size", bodyWord:"Body",
+    concernsWord:"Health concerns", none:"None",
+    startUser:"Get a recommendation", startBot:"Let's get started! First, let me check your membership.",
+    yesStart:"Yes, let's start →", startOver:"Start over",
+    restartConfirm:"Sure! Let's go through it step by step.",
+    authPrompt:"Let me check your membership for a more accurate recommendation.",
+    authMember:"Existing member", authJoin:"Sign up", authSkip:"Just proceed →",
+    authMemberU:"Continue as member", authMemberB:"Welcome back! 🙌",
+    authJoinU:"Sign up first", authJoinB:"Your results will be saved after signing up! 😊",
+    authSkipU:"Just proceed", authSkipB:"Got it!",
+    pickPet:"Please select your pet type.",
+    pickBreed:(pt)=>`Please select your ${pt==="dog"?"dog":"cat"} breed.`,
+    pickAge:"How old is your pet?", pickBody:"What is your pet's body condition?",
+    pickConcerns:"Do you have any health concerns?\nPlease select all that apply.",
+    editConcerns:"You can add or modify health concerns.\nPlease select all that apply.",
+    fast:(m)=>`I already have some info, let's move quickly! 😊\n${m}`,
+    next:"Next →", noConcern:"No concerns →",
+    specialQ:"Almost done! One last question.\n\nDo any of the following apply?",
+    spPreg:"Pregnant / Nursing", spSurg:"Post-surgery / On medication",
+    spAllergy:"Has allergies", spRx:"On prescription diet", spDirect:"Type manually ✏️",
+    spLabel:"Please describe any special notes",
+    spPlaceholder:"e.g., Doesn't like chicken, prefers salmon, has allergies...",
+    spDone:"Done →", spNone:"No special notes →", spBack:"← Back to buttons",
+    spNoneUser:"No special notes", spNoteWord:"Special notes",
+    summaryPre:"Here's a summary of your input. ✅", confirmQ:"Shall we proceed with the recommendation?",
+    confirmBtn:"✨ Get Recommendation", confirmU:"Yes, recommend! ✨", recommendU:"Yes, let's go!",
+    analyzing:"Analyzing... please wait a moment 🔍",
+    analyzingLabel:"Finding the best products for your pet",
+    done:(n,r)=>`<div class="done-banner">Analysis Complete! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}Check out the perfect Hill's products for ${n} below.`,
+    timeout:"Response timed out. 🔄 Please try again.",
+    error:"A temporary error occurred. Please try again shortly.",
+    retry:"🔄 Try again", petName:"your pet",
+    rxBadge:"Rx", flavorSfx:"", viewHills:"View on Hill's Official Site →",
+    browseMore:"Explore more Hill's products",
+    bestP:"Best Sellers", newP:"New Products", storeP:"Hill's Official Store",
+    bestUrl:"https://www.hillspet.com/dog-food",
+    newUrl:"https://www.hillspet.com/cat-food",
+    storeUrl:"https://www.hillspet.com",
+    saveQ:"Would you like to save your results?",
+    saveSub:"Sign up to access your recommendations anytime.",
+    kakao:"💬 Quick Sign Up", kakaoAlert:"Sign-up is coming soon!", skipSave:"Maybe later",
+    restartLink:"↩ Start over",
+    notRelevant:"Hello! I'm the **Hill's Pet Planner**, your personalized food recommendation bot. 🐾\n\nI can help with:\n• **Personalized food recommendations** for health concerns\n• **Nutritional advice** for dogs and cats\n• Hill's product information\n\nFeel free to ask me anything about your pet!",
+    noInfoSfx:"\n\nFeel free to ask any questions!\nYou can also press the **Get Recommendation** button below to start.",
+    parsed:"Here's what I've gathered.", parsedSfx:"\n\nShall we start the recommendation?",
+    parseErr:"I understand! Please share a few more details for an accurate recommendation.",
+    defSympathy:"I've noted your message.",
+    defGreeting:"Hello! Thanks for visiting for pet nutrition advice 😊",
+  },
+};
+
+const URL_LANG = new URLSearchParams(window.location.search).get("lang") === "en" ? "en" : "ko";
+
+function buildSummary(d, lang) {
+  const t = T[lang];
+  const age = t.ages[d.ageCategory]||"";
+  const body = t.bodyLabel[d.bodyCondition]||"";
+  const sizeText = t.size[d.sizeClass]||"";
+  const breed = lang==="en" ? (BREED_EN[d.breed]||d.breed) : d.breed;
+  const concerns = d.healthConcerns?.filter(c=>c!=="없음").map(c=>lang==="en"?(CONCERN_EN[c]||c):c);
+  return `${d.petType==="dog"?"🐶":"🐱"} ${breed||""} · ${age}\n${t.sizeWord} ${sizeText} · ${t.bodyWord} ${body}\n${t.concernsWord}: ${concerns?.join(", ")||t.none}`;
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
+  const lang = URL_LANG;
+  const t = T[lang];
+  const bd = (b) => lang==="en" ? (BREED_EN[b]||b) : b;
+  const cd = (c) => lang==="en" ? (CONCERN_EN[c]||c) : c;
+  const [messages, setMessages]   = useState([{role:"bot", text:t.greeting}]);
   const [step, setStep]           = useState("START");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
@@ -139,7 +283,7 @@ export default function App() {
     if (step==="CONFIRM_PARSE") {
       if (AFFIRM.test(txt)) { startRecommend(); return true; }
       if (DENY.test(txt)) {
-        addBot("알겠어요! 처음부터 차근차근 진행할게요.", "AUTH_PROMPT");
+        addBot(t.restartConfirm, "AUTH_PROMPT");
         return true;
       }
     }
@@ -166,29 +310,21 @@ export default function App() {
       const res = await fetchWithTimeout("/api/parse-intent", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ text: txt })
+        body: JSON.stringify({ text: txt, lang })
       });
       const parsed = await res.json();
 
       if (parsed.is_relevant === false) {
         setStep("START");
-        addBot(
-          "안녕하세요! 저는 **Hill's Pet Planner** 맞춤 사료 추천 봇이에요. 🐾\n\n" +
-          "아래와 같은 도움을 드릴 수 있어요:\n" +
-          "• 반려동물 건강 고민에 맞는 **맞춤 사료 추천**\n" +
-          "• 강아지/고양이 **영양 상담**\n" +
-          "• Hill's 제품 정보 안내\n\n" +
-          "반려동물에 대해 궁금한 점이 있으시면 편하게 말씀해 주세요!",
-          "START", 600
-        );
+        addBot(t.notRelevant, "START", 600);
         return;
       }
 
       const hasInfo = parsed.pet_type || parsed.age_category || (parsed.concerns && parsed.concerns.length > 0);
       if (!hasInfo) {
         setStep("START");
-        const greeting = parsed.sympathy_msg || "안녕하세요! 반려동물 영양 상담을 위해 찾아주셔서 감사합니다 😊";
-        addBot(greeting + "\n\n궁금한 점이 있으시면 편하게 말씀해 주세요!\n아래 **제품 추천 받기** 버튼을 눌러 시작하실 수도 있어요.", "START", 600);
+        const greeting = parsed.sympathy_msg || t.defGreeting;
+        addBot(greeting + t.noInfoSfx, "START", 600);
         return;
       }
 
@@ -198,7 +334,7 @@ export default function App() {
       setData(p=>({...p, ...newData}));
       dataRef.current = {...dataRef.current, ...newData};
 
-      const sympathyMsg = parsed.sympathy_msg || "말씀해주신 내용을 확인했어요.";
+      const sympathyMsg = parsed.sympathy_msg || t.defSympathy;
       setIsTyping(true);
       setTimeout(() => {
         setIsTyping(false);
@@ -206,34 +342,32 @@ export default function App() {
 
         setTimeout(() => {
           const chips = [];
-          if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?"🐶 강아지":"🐱 고양이");
-          if (parsed.breed) chips.push(`🐾 ${parsed.breed}`);
+          if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?t.dog:t.cat);
+          if (parsed.breed) chips.push(`🐾 ${bd(parsed.breed)}`);
           if (parsed.age_category) {
-            const ageLabels = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"};
-            if (ageLabels[parsed.age_category]) chips.push(`📅 ${ageLabels[parsed.age_category]}`);
+            if (t.ages[parsed.age_category]) chips.push(`📅 ${t.ages[parsed.age_category]}`);
           }
-          if (parsed.concerns?.length) chips.push(...parsed.concerns);
+          if (parsed.concerns?.length) chips.push(...parsed.concerns.map(c=>cd(c)));
           const chipHtml = chips.length
             ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
             : "";
-          addBot(`파악한 내용이에요.${chipHtml}\n\n맞춤 추천을 시작할까요?`, "CONFIRM_PARSE");
+          addBot(`${t.parsed}${chipHtml}${t.parsedSfx}`, "CONFIRM_PARSE");
         }, 800);
       }, 900);
 
     } catch {
-      addBot("말씀 잘 들었어요! 몇 가지 정보를 더 알려주시면 정확하게 추천해드릴게요.", "PET_TYPE", 600);
+      addBot(t.parseErr, "PET_TYPE", 600);
     }
   }
 
   function getNextStep(currentData) {
     const d = currentData || data;
-    if (!d.petType) return { step: "PET_TYPE", msg: "반려동물 종류를 선택해주세요." };
-    if (!d.breed) return { step: "BREED", msg: `${d.petType==="dog"?"강아지":"고양이"} 품종을 선택해주세요.` };
-    if (!d.ageCategory) return { step: "AGE", msg: "나이대를 알려주세요." };
-    
-    if (!d.bodyCondition) return { step: "BODY", msg: "체형 상태는 어떤가요?" };
-    if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: "건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요." };
-    return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요." };
+    if (!d.petType) return { step: "PET_TYPE", msg: t.pickPet };
+    if (!d.breed) return { step: "BREED", msg: t.pickBreed(d.petType) };
+    if (!d.ageCategory) return { step: "AGE", msg: t.pickAge };
+    if (!d.bodyCondition) return { step: "BODY", msg: t.pickBody };
+    if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: t.pickConcerns };
+    return { step: "CONCERNS", msg: t.editConcerns };
   }
 
   function goToNextStep(currentData, showSkip=false) {
@@ -246,14 +380,14 @@ export default function App() {
 
     if (showSkip) {
       const known = [];
-      if (d.petType) known.push(d.petType==="dog"?"🐶 강아지":"🐱 고양이");
+      if (d.petType) known.push(d.petType==="dog"?t.dog:t.cat);
       if (d.ageCategory) {
-        const ageLabel = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory];
+        const ageLabel = t.ages[d.ageCategory];
         if (ageLabel) known.push(ageLabel);
       }
-      if (d.healthConcerns?.length) known.push(...d.healthConcerns);
+      if (d.healthConcerns?.length) known.push(...d.healthConcerns.map(c=>cd(c)));
       if (known.length > 1) {
-        addBot(`이미 파악한 정보가 있어서 빠르게 진행할게요! 😊\n${msg}`, nextStep, 500);
+        addBot(t.fast(msg), nextStep, 500);
         return;
       }
     }
@@ -261,28 +395,28 @@ export default function App() {
   }
 
   function startRecommend() {
-    addUser("네, 추천받을게요!");
-    addBot("보다 정확한 추천을 위해 회원 여부를 확인합니다.", "AUTH_PROMPT", 500);
+    addUser(t.recommendU);
+    addBot(t.authPrompt, "AUTH_PROMPT", 500);
   }
 
   function handleAuth(choice) {
     if (choice === "member") {
-      addUser("회원으로 계속");
-      addBot("반갑습니다! 🙌", null, 400);
+      addUser(t.authMemberU);
+      addBot(t.authMemberB, null, 400);
       setTimeout(() => goToNextStep(null, true), 1400);
     } else if (choice === "join") {
-      addUser("회원 가입 후 진행");
-      addBot("회원가입 후에는 추천 결과가 저장돼요! 😊", null, 400);
+      addUser(t.authJoinU);
+      addBot(t.authJoinB, null, 400);
       setTimeout(() => goToNextStep(null, true), 1400);
     } else {
-      addUser("그냥 진행할게요");
-      addBot("알겠어요!", null, 300);
+      addUser(t.authSkipU);
+      addBot(t.authSkipB, null, 300);
       setTimeout(() => goToNextStep(null, true), 1200);
     }
   }
 
   function handlePetType(type) {
-    addUser(type==="dog"?"🐶 강아지":"🐱 고양이");
+    addUser(type==="dog"?t.dog:t.cat);
     const updated = {...dataRef.current, petType:type};
     setData(p=>({...p, petType:type}));
     dataRef.current = updated;
@@ -290,7 +424,7 @@ export default function App() {
   }
 
   async function handleBreed(breed) {
-    addUser(breed);
+    addUser(bd(breed));
     setStep("_WAIT");
     const autoSize = BREED_SIZE[breed] || "all";
     const updated = {...dataRef.current, breed, sizeClass: autoSize};
@@ -348,9 +482,9 @@ export default function App() {
     const autoConcerns = updated.healthConcerns || [];
     if (autoConcerns.length) {
       setSelected(autoConcerns.filter(c => c !== "없음"));
-      addBot("건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요.", "CONCERNS");
+      addBot(t.editConcerns, "CONCERNS");
     } else {
-      addBot("건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요.", "CONCERNS");
+      addBot(t.pickConcerns, "CONCERNS");
     }
   }
 
@@ -382,8 +516,8 @@ export default function App() {
     if (!finalConcerns.length) finalConcerns = [];
 
     const displayText = freeText.trim()
-      ? `${freeText.trim()}${selected.filter(c=>c!=="없음").length ? `\n+ ${selected.filter(c=>c!=="없음").join(", ")}` : ""}`
-      : (finalConcerns.length ? finalConcerns.join(", ") : "없음");
+      ? `${freeText.trim()}${selected.filter(c=>c!=="없음").length ? `\n+ ${selected.filter(c=>c!=="없음").map(c=>cd(c)).join(", ")}` : ""}`
+      : (finalConcerns.length ? finalConcerns.map(c=>cd(c)).join(", ") : t.none);
 
     addUser(displayText);
     const newData = {...data, healthConcerns:finalConcerns};
@@ -391,7 +525,7 @@ export default function App() {
     dataRef.current = {...dataRef.current, healthConcerns:finalConcerns};
     setSelected([]); setFreeText("");
 
-    addBot("거의 다 왔어요! 마지막으로 한 가지만요.\n\n다음 중 해당 사항이 있으신가요?", "SPECIAL");
+    addBot(t.specialQ, "SPECIAL");
   }
 
   function toggleSpecialOption(opt) {
@@ -405,21 +539,21 @@ export default function App() {
     const combined = [...selectedSpecial, ...(notes&&notes.trim()?[notes.trim()]:[])];
     const finalNotes = combined.join(", ");
     const hasNotes = finalNotes.length > 0;
-    addUser(hasNotes ? finalNotes : "특이사항 없음");
+    addUser(hasNotes ? finalNotes : t.spNoneUser);
 
     const updatedData = { ...dataRef.current, specialNotes: hasNotes ? finalNotes : "" };
     setData(p => ({ ...p, specialNotes: hasNotes ? finalNotes : "" }));
     dataRef.current = updatedData;
     setSpecial(""); setSelectedSpecial([]); setShowSpecialInput(false);
 
-    const summary = buildSummary(updatedData);
-    addBot(`입력하신 내용을 정리했어요. ✅\n\n${summary}${hasNotes ? `\n특이사항: ${finalNotes}` : ""}\n\n이대로 맞춤 추천을 받으시겠어요?`, "CONFIRM");
+    const summary = buildSummary(updatedData, lang);
+    addBot(`${t.summaryPre}\n\n${summary}${hasNotes ? `\n${t.spNoteWord}: ${finalNotes}` : ""}\n\n${t.confirmQ}`, "CONFIRM");
   }
 
   async function handleConfirm() {
-    addUser("네, 추천받을게요 ✨");
+    addUser(t.confirmU);
     setStep("LOADING");
-    addBot("분석 중이에요... 잠시만 기다려주세요 🔍", "LOADING", 400);
+    addBot(t.analyzing, "LOADING", 400);
 
     try {
       const res = await fetchWithTimeout("/api/recommend",{
@@ -434,6 +568,7 @@ export default function App() {
           breed: data.breed,
           pet_name: data.petName,
           special_notes: data.specialNotes || "",
+          lang,
         })
       });
       const result = await res.json();
@@ -441,27 +576,25 @@ export default function App() {
       setStep("DONE");
       playChime();
       const reasoning = result.overall_reasoning || "";
-      addBot(`<div class="done-banner">분석 완료! 🎉</div>${reasoning ? `<div class="done-reason">${reasoning}</div>` : ""}아래에서 ${data.petName||"반려동물"}에게 딱 맞는 Hill's 제품을 확인해보세요.`, "DONE", 600);
+      addBot(t.done(data.petName||t.petName, reasoning), "DONE", 600);
       setTimeout(() => setShowSave(true), 2000);
     } catch (err) {
       setStep("DONE");
-      const msg = err.name === "AbortError"
-        ? "응답 시간이 초과되었어요. 🔄 다시 추천받기를 눌러주세요."
-        : "일시적인 오류가 발생했어요. 잠시 후 다시 시도해주세요.";
+      const msg = err.name === "AbortError" ? t.timeout : t.error;
       addBot(msg, "DONE", 400);
     }
   }
 
   function handleRestart() {
-    setMessages([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
+    setMessages([{role:"bot", text:t.greeting}]);
     setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]); setShowSpecialInput(false);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
     setResults(null); setShowSave(false);
   }
 
   function handleStartRecommendBtn() {
-    addUser("맞춤 사료 추천받기");
-    addBot("시작해볼게요! 먼저 회원 여부를 확인할게요.", "AUTH_PROMPT", 400);
+    addUser(t.startUser);
+    addBot(t.startBot, "AUTH_PROMPT", 400);
   }
 
   function renderButtons() {
@@ -469,26 +602,26 @@ export default function App() {
 
     if (step==="CONFIRM_PARSE") return (
       <div className="btn-row">
-        <button className="choice-btn primary" onClick={startRecommend}>네, 시작할게요 →</button>
+        <button className="choice-btn primary" onClick={startRecommend}>{t.yesStart}</button>
         <button className="choice-btn ghost" onClick={()=>{
-          addUser("처음부터 할게요");
-          addBot("알겠어요! 처음부터 차근차근 진행할게요.", "AUTH_PROMPT");
-        }}>처음부터</button>
+          addUser(t.startOver);
+          addBot(t.restartConfirm, "AUTH_PROMPT");
+        }}>{t.startOver}</button>
       </div>
     );
 
     if (step==="AUTH_PROMPT") return (
       <div className="btn-row">
-        <button className="choice-btn ghost" disabled style={{opacity:0.4,cursor:"not-allowed"}} onClick={()=>handleAuth("member")}>기존 회원</button>
-        <button className="choice-btn ghost" disabled style={{opacity:0.4,cursor:"not-allowed"}} onClick={()=>handleAuth("join")}>회원 가입</button>
-        <button className="choice-btn primary" onClick={()=>handleAuth("skip")}>그냥 진행 →</button>
+        <button className="choice-btn ghost" disabled style={{opacity:0.4,cursor:"not-allowed"}} onClick={()=>handleAuth("member")}>{t.authMember}</button>
+        <button className="choice-btn ghost" disabled style={{opacity:0.4,cursor:"not-allowed"}} onClick={()=>handleAuth("join")}>{t.authJoin}</button>
+        <button className="choice-btn primary" onClick={()=>handleAuth("skip")}>{t.authSkip}</button>
       </div>
     );
 
     if (step==="PET_TYPE") return (
       <div className="btn-grid-2">
-        <button className="choice-btn big" onClick={()=>handlePetType("dog")}>🐶 강아지</button>
-        <button className="choice-btn big" onClick={()=>handlePetType("cat")}>🐱 고양이</button>
+        <button className="choice-btn big" onClick={()=>handlePetType("dog")}>{t.dog}</button>
+        <button className="choice-btn big" onClick={()=>handlePetType("cat")}>{t.cat}</button>
       </div>
     );
 
@@ -496,23 +629,23 @@ export default function App() {
       const breeds = data.petType==="dog"?DOG_BREEDS:CAT_BREEDS;
       return (
         <div className="btn-grid-3">
-          {breeds.map(b=><button key={b} className="choice-btn small" onClick={()=>handleBreed(b)}>{b}</button>)}
+          {breeds.map(b=><button key={b} className="choice-btn small" onClick={()=>handleBreed(b)}>{bd(b)}</button>)}
         </div>
       );
     }
 
     if (step==="AGE") return (
       <div className="btn-row" style={{flexWrap:"wrap"}}>
-        {[["puppy","1살 미만"],["adult","1~7살"],["senior7","7~11살"],["senior11","11살 이상"]].map(([v,l])=>(
-          <button key={v} className="choice-btn" onClick={()=>handleAge(v,l)}>{l}</button>
+        {["puppy","adult","senior7","senior11"].map(v=>(
+          <button key={v} className="choice-btn" onClick={()=>handleAge(v,t.ages[v])}>{t.ages[v]}</button>
         ))}
       </div>
     );
 
     if (step==="BODY") return (
       <div className="btn-row">
-        {[["underweight","🔻 마름"],["normal","✅ 정상"],["overweight","🔺 과체중"]].map(([v,l])=>(
-          <button key={v} className="choice-btn" onClick={()=>handleBody(v,l)}>{l}</button>
+        {["underweight","normal","overweight"].map(v=>(
+          <button key={v} className="choice-btn" onClick={()=>handleBody(v,t.body[v])}>{t.body[v]}</button>
         ))}
       </div>
     );
@@ -525,31 +658,31 @@ export default function App() {
             {list.map(c=>(
               <button key={c}
                 className={`choice-btn small${selected.includes(c)?" selected":""}`}
-                onClick={()=>toggleConcern(c)}>{c}</button>
+                onClick={()=>toggleConcern(c)}>{cd(c)}</button>
             ))}
           </div>
           <button className="next-btn" onClick={handleConcernsDone}>
-            {selected.length>0 ? "다음 →" : "건강고민 없어요 →"}
+            {selected.length>0 ? t.next : t.noConcern}
           </button>
         </div>
       );
     }
 
     if (step==="SPECIAL") {
-      const specialOpts = ["임신/수유 중","수술 후 회복 중 / 약 복용 중","알레르기 있음","처방식 먹는 중"];
+      const specialOpts = [t.spPreg, t.spSurg, t.spAllergy, t.spRx];
       if (showSpecialInput) {
         return (
           <div className="concerns-wrap">
             <div className="free-input-wrap">
-              <div className="free-input-label">특이사항을 자유롭게 입력해주세요</div>
+              <div className="free-input-label">{t.spLabel}</div>
               <textarea className="free-input"
-                placeholder="예: 치킨 맛 싫어해요, 연어 맛 선호해요, 알레르기가 있어요..."
+                placeholder={t.spPlaceholder}
                 value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
             </div>
             <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>
-              {specialNotes.trim() ? "입력 완료 →" : "특별사항 없어요 →"}
+              {specialNotes.trim() ? t.spDone : t.spNone}
             </button>
-            <button className="back-to-btns" onClick={()=>{setShowSpecialInput(false);}}>← 버튼으로 선택하기</button>
+            <button className="back-to-btns" onClick={()=>{setShowSpecialInput(false);}}>{t.spBack}</button>
           </div>
         );
       }
@@ -562,10 +695,10 @@ export default function App() {
                 onClick={()=>toggleSpecialOption(opt)}>{opt}</button>
             ))}
             <button className="choice-btn small special-direct-input"
-              onClick={()=>setShowSpecialInput(true)}>직접 입력 ✏️</button>
+              onClick={()=>setShowSpecialInput(true)}>{t.spDirect}</button>
           </div>
           <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>
-            {selectedSpecial.length>0 || specialNotes.trim() ? "다음 →" : "특별사항 없어요 →"}
+            {selectedSpecial.length>0 || specialNotes.trim() ? t.next : t.spNone}
           </button>
         </div>
       );
@@ -573,14 +706,14 @@ export default function App() {
 
     if (step==="CONFIRM") return (
       <div className="btn-row">
-        <button className="choice-btn primary" onClick={handleConfirm}>✨ 맞춤 추천받기</button>
-        <button className="choice-btn ghost" onClick={handleRestart}>처음부터</button>
+        <button className="choice-btn primary" onClick={handleConfirm}>{t.confirmBtn}</button>
+        <button className="choice-btn ghost" onClick={handleRestart}>{t.startOver}</button>
       </div>
     );
 
     if (step==="DONE") return (
       <div className="btn-row">
-        <button className="choice-btn" onClick={handleRestart}>🔄 다시 추천받기</button>
+        <button className="choice-btn" onClick={handleRestart}>{t.retry}</button>
       </div>
     );
 
@@ -601,7 +734,7 @@ export default function App() {
       <div className="product-card">
         <div className="card-top">
           <span className="card-rank-badge">{ranks[index]||`#${index+1}`}</span>
-          {product.is_prescription && <span className="card-rx-badge">처방식</span>}
+          {product.is_prescription && <span className="card-rx-badge">{t.rxBadge}</span>}
         </div>
         <div className="card-body">
           <div className="card-img-row">
@@ -621,7 +754,7 @@ export default function App() {
           </div>
           <div className="card-meta">
             {product.food_form && <span className="meta-item">{product.food_form}</span>}
-            {product.flavor && <span className="meta-item">{product.flavor}맛</span>}
+            {product.flavor && <span className="meta-item">{product.flavor}{t.flavorSfx}</span>}
             {product.is_activbiome && <span className="meta-item activbiome">액티브바이옴+</span>}
             {product.product_line && <span className="meta-item">{product.product_line}</span>}
           </div>
@@ -633,8 +766,8 @@ export default function App() {
           {product.description && <div className="card-desc">{product.description}</div>}
           {product.reasoning && <div className="card-reason">{product.reasoning}</div>}
           {product.product_url && (
-            <a href={product.product_url} target="_blank" rel="noreferrer" className="card-link">
-              Hill's 공식 사이트에서 보기 →
+            <a href={lang==="en"?product.product_url.replace("www.hillspet.co.kr","www.hillspet.com"):product.product_url} target="_blank" rel="noreferrer" className="card-link">
+              {t.viewHills}
             </a>
           )}
         </div>
@@ -662,7 +795,7 @@ export default function App() {
           <img className="logo-icon" src="/bot-logo.png" alt="Pet Life Planner" />
           <div>
             <div className="header-title">Hill's Pet Planner</div>
-            <div className="header-sub">힐스 펫 플래너</div>
+            <div className="header-sub">{t.headerSub}</div>
           </div>
           <button className="header-close-btn" onClick={() => {playClose(); setTimeout(()=>setChatOpen(false), 150);}}>✕</button>
         </div>
@@ -694,7 +827,7 @@ export default function App() {
             <div className="loading-icon-wrap">
               <span className="loading-magnifier">🔍</span>
             </div>
-            <div className="loading-label">맞춤 제품을 분석하고 있어요</div>
+            <div className="loading-label">{t.analyzingLabel}</div>
             <div className="loading-dots-bar"><span/><span/><span/></div>
           </div>
         )}
@@ -714,25 +847,25 @@ export default function App() {
         {showSave&&step==="DONE"&&(
           <div className="save-cta">
             <div className="quick-options" style={{marginBottom:"12px"}}>
-              <div style={{fontSize:"13px",color:"var(--gray-500)",marginBottom:"6px"}}>다른 힐스 제품도 둘러보세요</div>
-              <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-                <span>베스트 제품</span><span className="quick-arrow">→</span>
+              <div style={{fontSize:"13px",color:"var(--gray-500)",marginBottom:"6px"}}>{t.browseMore}</div>
+              <a href={t.bestUrl} target="_blank" rel="noreferrer" className="quick-option-bar">
+                <span>{t.bestP}</span><span className="quick-arrow">→</span>
               </a>
-              <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-                <span>신제품</span><span className="quick-arrow">→</span>
+              <a href={t.newUrl} target="_blank" rel="noreferrer" className="quick-option-bar">
+                <span>{t.newP}</span><span className="quick-arrow">→</span>
               </a>
-              <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
-                <span>힐스 공식 브랜드 스토어</span><span className="quick-arrow">→</span>
+              <a href={t.storeUrl} target="_blank" rel="noreferrer" className="quick-option-bar">
+                <span>{t.storeP}</span><span className="quick-arrow">→</span>
               </a>
             </div>
-            <div className="save-cta-title">결과를 저장해두시겠어요?</div>
-            <div className="save-cta-sub">회원가입 시 추천 결과를 언제든 다시 확인할 수 있어요.</div>
+            <div className="save-cta-title">{t.saveQ}</div>
+            <div className="save-cta-sub">{t.saveSub}</div>
             <div className="save-cta-btns">
-              <button className="save-btn-kakao" onClick={()=>alert("카카오 로그인은 준비 중이에요!")}>
-                💬 카카오로 1초 가입
+              <button className="save-btn-kakao" onClick={()=>alert(t.kakaoAlert)}>
+                {t.kakao}
               </button>
               <button className="save-btn-skip" onClick={()=>setShowSave(false)}>
-                다음에 할게요
+                {t.skipSave}
               </button>
             </div>
           </div>
@@ -744,19 +877,19 @@ export default function App() {
       <footer className="footer">
         {step!=="LOADING"&&step!=="START"&&renderButtons()}
         {["PET_TYPE","BREED","AGE","BODY","CONCERNS","SPECIAL","CONFIRM"].includes(step)&&(
-          <button className="restart-link" onClick={handleRestart}>↩ 처음부터 다시 하기</button>
+          <button className="restart-link" onClick={handleRestart}>{t.restartLink}</button>
         )}
         {step==="START"&&!isTyping&&messages.length>0&&(
           <div className="quick-options">
             <button className="cta-recommend" onClick={handleStartRecommendBtn}>
-              힐스 맞춤 제품 추천 받기
+              {t.cta}
             </button>
           </div>
         )}
         <div className={`input-row-wrapper ${step === "START" ? "visible" : ""}`}>
           <div className="input-row">
             <input className="text-input" type="text"
-              placeholder="힐스와 상담하기"
+              placeholder={t.placeholder}
               value={mainInput}
               onChange={e=>setMainInput(e.target.value)}
               onKeyDown={e=>{if(e.key==="Enter"&&(e.shiftKey||!e.nativeEvent.isComposing)){e.preventDefault();handleMainInput();}}}

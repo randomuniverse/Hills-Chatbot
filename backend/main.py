@@ -73,6 +73,7 @@ def force_refresh():
 
 class IntentRequest(BaseModel):
     text: str
+    lang: Optional[str] = "ko"
 
 class ClassifyRequest(BaseModel):
     text: str
@@ -87,6 +88,7 @@ class RecommendRequest(BaseModel):
     breed: Optional[str] = None
     pet_name: Optional[str] = None
     special_notes: Optional[str] = None
+    lang: Optional[str] = "ko"
 
 class BreedCommentRequest(BaseModel):
     breed: str
@@ -97,47 +99,77 @@ class ParseSpecialRequest(BaseModel):
     pet_type: str
     life_stage: str
 
+def _build_intent_prompt(text, is_en):
+    dog_concerns = ', '.join(get_concerns('dog'))
+    cat_concerns = ', '.join(get_concerns('cat'))
+    if is_en:
+        return (
+            f'Pet owner message: "{text}"\n\n'
+            "First, determine if this message is about pets, pet food, health, or pet-related topics.\n"
+            "If completely irrelevant (spam, nonsense, unrelated), set is_relevant to false.\n\n"
+            "Respond ONLY in this JSON format:\n"
+            "{\n"
+            '  "is_relevant": true or false,\n'
+            '  "pet_type": "dog" or "cat" or null,\n'
+            '  "breed": "breed name in KOREAN" or null (e.g., "진도개", "말티즈", "페르시안"),\n'
+            '  "age_category": "puppy"(<1yr) or "adult"(1-7yr) or "senior7"(7-11yr) or "senior11"(11+yr) or null,\n'
+            f'  "concerns": [use ONLY these exact Korean strings: {dog_concerns}, {cat_concerns}],\n'
+            '  "sympathy_msg": "A warm empathetic English message, 1-2 sentences. Include brief summary of the issue.",\n'
+            '  "missing": ["pet_type","age","weight" etc.]\n'
+            "}\n\n"
+            "IMPORTANT: concerns must use the EXACT Korean strings from the list above. Do not translate them.\n"
+            "IMPORTANT: breed must be in KOREAN.\n"
+            "sympathy_msg must be in English.\n"
+            "If is_relevant is false: pet_type=null, age_category=null, concerns=[], sympathy_msg empty string"
+        )
+    return (
+        f"보호자 메시지: \"{text}\"\n\n"
+        "먼저 이 메시지가 반려동물, 사료, 건강, 펫 관련 주제인지 판단하세요.\n"
+        "전혀 관련 없는 메시지(욕설, 장난, 스팸, 무관한 주제)라면 is_relevant를 false로 설정하세요.\n\n"
+        "아래 JSON 형식으로만 응답:\n"
+        "{\n"
+        '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
+        '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
+        '  "breed": "품종명(한글)" 또는 null (예: "진도개", "말티즈", "페르시안" 등),\n'
+        '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
+        '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
+        '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
+        '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
+        "}\n\n"
+        "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
+        f"concerns 가능 값(강아지): {dog_concerns}\n"
+        f"concerns 가능 값(고양이): {cat_concerns}\n"
+        "\n★ 중요 규칙:\n"
+        "1. concerns에는 반드시 위 '가능 값' 목록에 있는 정확한 문자열만 사용하세요. 목록에 없는 값을 절대 만들지 마세요.\n"
+        "   - 암/종양 진단 → concerns는 빈 배열[]로 두고, sympathy_msg에서 수의사 상담을 강력히 권고하세요.\n"
+        "   - 사료를 안 먹음/기호성 문제/입맛 → concerns를 빈 배열로 두고, sympathy_msg에서 기호성 문제에 공감하세요.\n"
+        "   - 고양이 털 빠짐 → '헤어볼'과 '피부 건강' 둘 다 concerns에 포함하세요.\n"
+        "   - 강아지 털 빠짐 → '피부 건강'을 concerns에 포함하세요.\n"
+        "   - 한 가지 증상이 여러 건강고민에 해당될 수 있습니다. 관련된 모든 카테고리를 포함하세요.\n"
+        "2. 당뇨, 신장질환, 암, 방광결석 등 진단받은 질환이 언급되면 sympathy_msg에 '수의사와 상담 후 처방식을 선택하시는 것이 중요합니다'를 반드시 포함하세요.\n"
+        "3. 보호자의 요청과 실제 상황이 모순될 때 sympathy_msg에서 부드럽게 교정해주세요.\n"
+        "4. 생후 4주 미만 동물은 사료를 먹을 수 없습니다. concerns=[]로 하고 sympathy_msg에 모유/분유 안내하세요.\n"
+        "\nsympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
+        "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
+    )
+
 @app.post("/api/parse-intent")
 async def parse_intent(req: IntentRequest):
+    is_en = req.lang == "en"
     try:
         resp = claude.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=512,
             system=(
+                "You are a pet nutrition specialist. "
+                "Extract information from the pet owner's message and respond with empathy in English. "
+                "Respond ONLY in JSON format with no other text."
+            ) if is_en else (
                 "당신은 반려동물 영양 전문 상담사입니다. "
                 "보호자의 메시지에서 정보를 파악하고 공감하는 한국어로 응답합니다. "
                 "JSON 형식으로만 응답하고 다른 텍스트는 포함하지 마세요."
             ),
-            messages=[{"role":"user","content":(
-                f"보호자 메시지: \"{req.text}\"\n\n"
-                "먼저 이 메시지가 반려동물, 사료, 건강, 펫 관련 주제인지 판단하세요.\n"
-                "전혀 관련 없는 메시지(욕설, 장난, 스팸, 무관한 주제)라면 is_relevant를 false로 설정하세요.\n\n"
-                "아래 JSON 형식으로만 응답:\n"
-                "{\n"
-                '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
-                '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
-                '  "breed": "품종명(한글)" 또는 null (예: "진도개", "말티즈", "페르시안" 등),\n'
-                '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
-                '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
-                '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
-                '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
-                "}\n\n"
-                "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
-                f"concerns 가능 값(강아지): {', '.join(get_concerns('dog'))}\n"
-                f"concerns 가능 값(고양이): {', '.join(get_concerns('cat'))}\n"
-                "\n★ 중요 규칙:\n"
-                "1. concerns에는 반드시 위 '가능 값' 목록에 있는 정확한 문자열만 사용하세요. '암 환자 지원', '응급 관리' 등 목록에 없는 값을 절대 만들지 마세요.\n"
-                "   - 암/종양 진단 → concerns는 빈 배열[]로 두고, sympathy_msg에서 수의사 상담을 강력히 권고하세요.\n"
-                "   - 사료를 안 먹음/기호성 문제/입맛 → concerns를 빈 배열로 두고, sympathy_msg에서 기호성 문제에 공감하세요.\n"
-                "   - 고양이 털 빠짐/털 많이 빠짐/털 날림 → '헤어볼'과 '피부 건강' 둘 다 concerns에 포함하세요.\n"
-                "   - 강아지 털 빠짐/털 관리 → '피부 건강'을 concerns에 포함하세요.\n"
-                "   - 한 가지 증상이 여러 건강고민에 해당될 수 있습니다. 관련된 모든 카테고리를 포함하세요.\n"
-                "2. 당뇨, 신장질환, 암, 방광결석 등 진단받은 질환이 언급되면 sympathy_msg에 '수의사와 상담 후 처방식을 선택하시는 것이 중요합니다'를 반드시 포함하세요.\n"
-                "3. 보호자의 요청과 실제 상황이 모순될 때 (예: 2살인데 노령견 사료 요청) sympathy_msg에서 나이에 맞는 사료가 더 적합하다고 부드럽게 교정해주세요.\n"
-                "4. '갓 태어난', '신생아', '생후 며칠' 등 생후 4주 미만 동물은 사료를 먹을 수 없습니다. is_relevant=true로 두되, concerns=[]로 하고 sympathy_msg에 '아직 사료를 먹기 어려운 시기예요. 어미의 모유 수유가 가장 중요하며, 어려운 경우 전용 분유를 사용해주세요. 수의사와 상담을 권장드립니다.'라고 안내하세요.\n"
-                "\nsympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
-                "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
-            )}]
+            messages=[{"role":"user","content":_build_intent_prompt(req.text, is_en)}]
         )
         raw = resp.content[0].text.strip()
         if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
@@ -147,13 +179,15 @@ async def parse_intent(req: IntentRequest):
         return data
     except json.JSONDecodeError:
         logger.warning(f"parse-intent: JSON parse failed for input: {req.text[:50]}")
-        return {"is_relevant": True, "pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
+        fallback_msg = "I've noted your message." if is_en else "말씀해주신 내용을 확인했어요."
+        return {"is_relevant": True, "pet_type": None, "concerns": [], "sympathy_msg": fallback_msg, "missing": []}
     except anthropic.APITimeoutError:
         logger.error("parse-intent: Claude API timeout")
-        raise HTTPException(504, "AI 응답 시간이 초과되었습니다. 다시 시도해주세요.")
+        raise HTTPException(504, "AI response timed out." if is_en else "AI 응답 시간이 초과되었습니다. 다시 시도해주세요.")
     except Exception as e:
         logger.error(f"parse-intent error: {e}")
-        return {"is_relevant": True, "pet_type": None, "concerns": [], "sympathy_msg": "말씀해주신 내용을 확인했어요.", "missing": []}
+        fallback_msg = "I've noted your message." if is_en else "말씀해주신 내용을 확인했어요."
+        return {"is_relevant": True, "pet_type": None, "concerns": [], "sympathy_msg": fallback_msg, "missing": []}
 
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
@@ -332,13 +366,35 @@ async def recommend(req: RecommendRequest):
         for i,p in enumerate(top)
     ])
 
-    body_label = {"underweight":"마름","normal":"정상","overweight":"과체중"}.get(req.body_condition,"정상")
-    concerns   = ", ".join(all_concerns) if all_concerns else "없음"
-    pet_name   = req.pet_name or "반려동물"
+    is_en = req.lang == "en"
+    body_label = {"underweight":"Thin","normal":"Normal","overweight":"Overweight"}.get(req.body_condition,"Normal") if is_en else {"underweight":"마름","normal":"정상","overweight":"과체중"}.get(req.body_condition,"정상")
+    concerns   = ", ".join(all_concerns) if all_concerns else ("None" if is_en else "없음")
+    pet_name   = req.pet_name or ("your pet" if is_en else "반려동물")
     special_summary = special.get("summary","") if special else ""
     vet_required = special.get("vet_consult_required", False) if special else False
 
-    prompt = f"""
+    if is_en:
+        prompt = f"""
+Pet information:
+- Name: {pet_name} / Type: {"Dog" if req.pet_type=="dog" else "Cat"} ({req.breed or "breed not specified"})
+- Life stage: {effective_stage} / Body: {body_label} / Health concerns: {concerns}
+- Special notes: {special_summary or "None"}
+- Vet consultation needed: {"Yes" if vet_required else "No"}
+
+Hills product candidates:
+{summary}
+
+**Important**: If multiple health concerns exist, include products covering different concerns. Don't focus on just one.
+**Select exactly 2-3 products** and respond ONLY in JSON (never select just 1):
+{{
+  "selected_indices": [1, 2],
+  "overall_reasoning": "Overall recommendation reason in English, under 150 chars. Reflect special notes.",
+  "individual_reasons": ["Reason for product 1 in English", "Reason for product 2 in English"],
+  "prescription_note": "Note if prescription diet included or vet consultation needed, or null",
+  "special_warning": "Warning about pregnancy/nursing/medication special notes, or null"
+}}"""
+    else:
+        prompt = f"""
 반려동물 정보:
 - 이름: {pet_name} / 종류: {"강아지" if req.pet_type=="dog" else "고양이"} ({req.breed or "품종 미입력"})
 - 생애단계: {effective_stage} / 체형: {body_label} / 건강고민: {concerns}
@@ -349,8 +405,6 @@ Hills 제품 후보:
 {summary}
 
 **중요 - 맛/재료 선호**: 특이사항에 맛/재료 선호나 기피가 있으면 반영하세요.
-예: "치킨 싫어함" → 치킨/닭 맛 제품을 피하고, 연어·참치·오리 등 대안 맛 제품을 우선 추천.
-단, 맛이 명시되지 않은 처방식도 대안이 될 수 있습니다.
 기피 맛 제품만 있고 대안이 없으면, 기피 맛이라도 포함하되 individual_reasons에 맛 관련 안내를 추가하세요.
 
 **중요**: 건강고민이 여러 개일 경우, 각 고민을 커버하는 제품을 골고루 포함하세요. 특정 고민만 집중하지 마세요.
@@ -363,11 +417,12 @@ Hills 제품 후보:
   "special_warning": "임신/수유/약복용 등 특이사항 관련 주의사항, 없으면 null"
 }}"""
 
+    sys_msg = "Hills Pet Nutrition official nutrition advisor. Prescription diets require vet consultation. Respond ONLY in JSON." if is_en else "Hills Pet Nutrition 공식 영양 상담사. 처방식은 수의사 상담 필수 안내. JSON으로만 응답."
     try:
         resp = claude.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=1024,
-            system="Hills Pet Nutrition 공식 영양 상담사. 처방식은 수의사 상담 필수 안내. JSON으로만 응답.",
+            system=sys_msg,
             messages=[{"role":"user","content":prompt}]
         )
         raw = resp.content[0].text.strip()
