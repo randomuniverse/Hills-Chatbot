@@ -72,7 +72,14 @@ export default function App() {
     }).catch(()=>{});
   }, []);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages, isTyping, results, showSave, step, selected]);
+  const doneRef = useRef(null);
+  useEffect(() => {
+    if (step === "DONE" && results) {
+      setTimeout(() => doneRef.current?.scrollIntoView({ behavior:"smooth", block:"start" }), 300);
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior:"smooth" });
+    }
+  }, [messages, isTyping, results, showSave, step, selected]);
 
   function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
     const controller = new AbortController();
@@ -415,7 +422,8 @@ export default function App() {
       setResults(result);
       setStep("DONE");
       playChime();
-      addBot(`분석 완료! 🎉\n아래에서 ${data.petName||"반려동물"}에게 딱 맞는 Hill's 제품을 확인해보세요.`, "DONE", 600);
+      const reasoning = result.overall_reasoning || "";
+      addBot(`<div class="done-banner">분석 완료! 🎉</div>${reasoning ? `<div class="done-reason">${reasoning}</div>` : ""}아래에서 ${data.petName||"반려동물"}에게 딱 맞는 Hill's 제품을 확인해보세요.`, "DONE", 600);
       setTimeout(() => setShowSave(true), 2000);
     } catch (err) {
       setStep("DONE");
@@ -634,14 +642,17 @@ export default function App() {
 
       <main className="chat-area">
 
-        {messages.map((m,i)=>(
-          <div key={i} className={`bubble-wrap ${m.role}`}>
+        {messages.map((m,i)=>{
+          const isDone = m.role==="bot" && m.text.includes("done-banner");
+          return (
+          <div key={i} className={`bubble-wrap ${m.role}`} ref={isDone?doneRef:null}>
             {m.role==="bot"&&<img className="avatar" src="/bot-avatar.png" alt="bot" />}
-            <div className={`bubble ${m.role}`}>
+            <div className={`bubble ${m.role}${isDone?" done-bubble":""}`}>
               <BubbleText text={m.text}/>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {isTyping&&(
           <div className="bubble-wrap bot">
@@ -663,12 +674,6 @@ export default function App() {
         {results&&step==="DONE"&&(
           <div className="results-wrap">
             {results.products?.map((p,i)=><ProductCard key={i} product={p} index={i}/>)}
-            {results.overall_reasoning&&(
-              <div className="overall-box">
-                <div className="overall-label">종합 추천 이유</div>
-                <div className="overall-text">{results.overall_reasoning}</div>
-              </div>
-            )}
             {results.special_warning&&(
               <div className="rx-note">🔔 {results.special_warning}</div>
             )}
