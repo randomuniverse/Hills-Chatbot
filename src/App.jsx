@@ -45,10 +45,50 @@ export default function App() {
   const dataRef = useRef(data);
   const audioCtxRef = useRef(null);
 
+  function getAudioCtx() {
+    if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtxRef.current;
+  }
+
+  function playOpen() {
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      [523.25, 659.25].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0, now + i * 0.06);
+        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.06 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.15);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now + i * 0.06);
+        osc.stop(now + i * 0.06 + 0.15);
+      });
+    } catch {}
+  }
+
+  function playClose() {
+    try {
+      const ctx = getAudioCtx();
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = 440;
+      osc.frequency.linearRampToValueAtTime(330, now + 0.08);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.1);
+    } catch {}
+  }
+
   function playChime() {
     try {
-      if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = audioCtxRef.current;
+      const ctx = getAudioCtx();
       const now = ctx.currentTime;
       const notes = [880, 1108.73, 1318.51];
       notes.forEach((freq, i) => {
@@ -633,7 +673,7 @@ export default function App() {
       </div>
 
       {!chatOpen && (
-        <button className="chat-fab" onClick={() => setChatOpen(true)}>
+        <button className="chat-fab" onClick={() => {setChatOpen(true); playOpen();}}>
           <img src="/bot-avatar.png" alt="chat" className="chat-fab-icon" />
         </button>
       )}
@@ -646,7 +686,7 @@ export default function App() {
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">힐스 펫 플래너</div>
           </div>
-          <button className="header-close-btn" onClick={() => setChatOpen(false)}>✕</button>
+          <button className="header-close-btn" onClick={() => {playClose(); setChatOpen(false);}}>✕</button>
         </div>
       </header>
 
