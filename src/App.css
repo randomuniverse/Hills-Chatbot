@@ -265,12 +265,14 @@ body {
 .chat-area {
   flex: 1;
   overflow-y: auto;
+  overflow-y: overlay;
   padding: 20px 16px 8px;
   display: flex;
   flex-direction: column;
   gap: 14px;
   scroll-behavior: smooth;
   background: var(--gray-100);
+  scrollbar-gutter: stable;
 }
 .chat-area::-webkit-scrollbar { width: 3px; }
 .chat-area::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
