@@ -748,8 +748,8 @@ export default function App() {
         )}
         {step==="START"&&!isTyping&&messages.length>0&&(
           <div className="quick-options">
-            <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
-              <span>힐스 맞춤 제품 추천 받기</span><span className="quick-arrow">→</span>
+            <button className="cta-recommend" onClick={handleStartRecommendBtn}>
+              힐스 맞춤 제품 추천 받기
             </button>
           </div>
         )}
