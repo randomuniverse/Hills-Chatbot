@@ -20,7 +20,7 @@ function buildSummary(d) {
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양 플래너 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
+  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
   const [step, setStep]           = useState("START");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
@@ -394,7 +394,7 @@ export default function App() {
   }
 
   function handleRestart() {
-    setMessages([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양 플래너 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
+    setMessages([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
     setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
     setResults(null); setShowSave(false);
