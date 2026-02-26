@@ -435,6 +435,8 @@ export default function App() {
   }
 
   function handlePetType(type) {
+    if (step !== "PET_TYPE") return;
+    setStep("_PROCESSING");
     addUser(type==="dog"?t.dog:t.cat);
     const updated = {...dataRef.current, petType:type};
     setData(p=>({...p, petType:type}));
@@ -443,6 +445,7 @@ export default function App() {
   }
 
   async function handleBreed(breed) {
+    if (step !== "BREED") return;
     addUser(bd(breed));
     setStep("_WAIT");
     const autoSize = BREED_SIZE[breed] || "all";
@@ -473,6 +476,8 @@ export default function App() {
   }
 
   function handleAge(cat, label) {
+    if (step !== "AGE") return;
+    setStep("_PROCESSING");
     addUser(label);
     const updated = {...dataRef.current, ageCategory:cat};
     if (cat === "senior7" || cat === "senior11") {
@@ -488,6 +493,8 @@ export default function App() {
 
 
   function handleBody(val, label) {
+    if (step !== "BODY") return;
+    setStep("_PROCESSING");
     addUser(label);
     const updated = {...dataRef.current, bodyCondition:val};
     if (val === "overweight") {
