@@ -199,8 +199,8 @@ export default function App() {
     if (!d.ageCategory) return { step: "AGE", msg: "나이대를 알려주세요." };
     if (d.weight === undefined) return { step: "WEIGHT", msg: "체중을 입력해주세요. (kg)" };
     if (!d.bodyCondition) return { step: "BODY", msg: "체형 상태는 어떤가요?" };
-    if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: "건강 관련 고민이 있으신가요?\n버튼으로 선택하시거나 직접 입력해도 돼요." };
-    return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요." };
+    if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: "건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요." };
+    return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요." };
   }
 
   function goToNextStep(currentData, showSkip=false) {
@@ -333,9 +333,9 @@ export default function App() {
     const autoConcerns = updated.healthConcerns || [];
     if (autoConcerns.length) {
       setSelected(autoConcerns.filter(c => c !== "없음"));
-      addBot("건강 고민을 추가하거나 수정할 수 있어요.\n버튼 선택 또는 직접 입력해주세요.", "CONCERNS");
+      addBot("건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요.", "CONCERNS");
     } else {
-      addBot("건강 관련 고민이 있으신가요?\n버튼으로 선택하시거나 직접 입력해도 돼요.", "CONCERNS");
+      addBot("건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요.", "CONCERNS");
     }
   }
 
@@ -525,12 +525,6 @@ export default function App() {
                 className={`choice-btn small${selected.includes(c)?" selected":""}`}
                 onClick={()=>toggleConcern(c)}>{c}</button>
             ))}
-          </div>
-          <div className="free-input-wrap">
-            <div className="free-input-label">직접 입력 (선택 사항)</div>
-            <textarea className="free-input"
-              placeholder="예: 요즘 털이 많이 빠지고 자꾸 발을 핥아요..."
-              value={freeText} onChange={e=>setFreeText(e.target.value)} />
           </div>
           <button className="next-btn" onClick={handleConcernsDone}>다음 →</button>
         </div>
