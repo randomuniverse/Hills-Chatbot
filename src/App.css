@@ -113,8 +113,8 @@ body {
   z-index: 999;
   width: 400px;
   max-width: 400px;
-  height: 820px;
-  max-height: calc(100vh - 90px);
+  height: 750px;
+  max-height: calc(100vh - 116px);
   display: flex;
   flex-direction: column;
   background: var(--white);
