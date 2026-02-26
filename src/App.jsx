@@ -20,7 +20,7 @@ function buildSummary(d) {
 }
 
 export default function App() {
-  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료추천 서비스 **힐스 펫 플래너** 입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
+  const [messages, setMessages]   = useState([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양 플래너 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
   const [step, setStep]           = useState("START");
   const [data, setData]           = useState({});
   const [selected, setSelected]   = useState([]);
@@ -394,7 +394,7 @@ export default function App() {
   }
 
   function handleRestart() {
-    setMessages([{role:"bot", text:"안녕하세요! 👋\n힐스 맞춤 사료 추천 서비스입니다.\n\n궁금한 점이 있으시면 편하게 말씀해 주세요."}]);
+    setMessages([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양 플래너 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
     setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
     setResults(null); setShowSave(false);
@@ -666,6 +666,18 @@ export default function App() {
 
         {showSave&&step==="DONE"&&(
           <div className="save-cta">
+            <div className="quick-options" style={{marginBottom:"12px"}}>
+              <div style={{fontSize:"13px",color:"var(--gray-500)",marginBottom:"6px"}}>다른 힐스 제품도 둘러보세요</div>
+              <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
+                <span>베스트 제품</span><span className="quick-arrow">→</span>
+              </a>
+              <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
+                <span>신제품</span><span className="quick-arrow">→</span>
+              </a>
+              <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
+                <span>힐스 공식 브랜드 스토어</span><span className="quick-arrow">→</span>
+              </a>
+            </div>
             <div className="save-cta-title">결과를 저장해두시겠어요?</div>
             <div className="save-cta-sub">회원가입 시 추천 결과를 언제든 다시 확인할 수 있어요.</div>
             <div className="save-cta-btns">
@@ -689,17 +701,8 @@ export default function App() {
         )}
         {step==="START"&&!isTyping&&messages.length>0&&(
           <div className="quick-options">
-            <a href="https://brand.naver.com/hillspet/best?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>베스트 제품: 가장 인기 있는 힐스 제품들입니다.</span><span className="quick-arrow">→</span>
-            </a>
-            <a href="https://brand.naver.com/hillspet/category/5526579881be42af8bce22e4c17b9d92?cp=1" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>신제품: 과학으로 설계된 새로운 힐스 제품!</span><span className="quick-arrow">→</span>
-            </a>
-            <a href="https://brand.naver.com/hillspet" target="_blank" rel="noreferrer" className="quick-option-bar">
-              <span>힐스 공식 브랜드 스토어</span><span className="quick-arrow">→</span>
-            </a>
             <button className="quick-option-bar highlight" onClick={handleStartRecommendBtn}>
-              <span>제품 추천 받기</span><span className="quick-arrow">→</span>
+              <span>힐스 맞춤 제품 추천 받기</span><span className="quick-arrow">→</span>
             </button>
           </div>
         )}
