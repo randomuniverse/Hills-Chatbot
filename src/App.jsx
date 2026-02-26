@@ -15,8 +15,8 @@ const STEP_PROGRESS = {
 function buildSummary(d) {
   const age = {puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"}[d.ageCategory]||"";
   const body = {underweight:"마름",normal:"정상",overweight:"과체중"}[d.bodyCondition]||"";
-  const weightText = d.weight ? `${d.weight}kg` : "모름";
-  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체중 ${weightText} · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
+  const sizeText = {small:"소형",all:"중형",large:"대형"}[d.sizeClass]||"";
+  return `${d.petType==="dog"?"🐶":"🐱"} ${d.breed||""} · ${age}\n체급 ${sizeText} · 체형 ${body}\n건강 고민: ${d.healthConcerns?.filter(c=>c!=="없음").join(", ")||"없음"}`;
 }
 
 export default function App() {
@@ -197,7 +197,7 @@ export default function App() {
     if (!d.petType) return { step: "PET_TYPE", msg: "반려동물 종류를 선택해주세요." };
     if (!d.breed) return { step: "BREED", msg: `${d.petType==="dog"?"강아지":"고양이"} 품종을 선택해주세요.` };
     if (!d.ageCategory) return { step: "AGE", msg: "나이대를 알려주세요." };
-    if (d.weight === undefined) return { step: "WEIGHT", msg: "체중을 입력해주세요. (kg)" };
+    if (!d.sizeClass && d.petType==="dog") return { step: "WEIGHT", msg: "체급을 선택해주세요." };
     if (!d.bodyCondition) return { step: "BODY", msg: "체형 상태는 어떤가요?" };
     if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: "건강 관련 고민이 있으신가요?\n해당하는 항목을 선택해주세요." };
     return { step: "CONCERNS", msg: "건강 고민을 추가하거나 수정할 수 있어요.\n해당하는 항목을 선택해주세요." };
@@ -299,22 +299,10 @@ export default function App() {
     setTimeout(() => goToNextStep(updated), 400);
   }
 
-  function handleWeight() {
-    const w = parseFloat(inputVal);
-    if (!w||w<=0||w>150) return;
-    addUser(`${w} kg`);
-    setInputVal("");
-    const updated = {...dataRef.current, weight:w};
-    setData(p=>({...p, weight:w}));
-    dataRef.current = updated;
-    setTimeout(() => goToNextStep(updated), 400);
-  }
-
-  function handleWeightUnknown() {
-    addUser("모름");
-    setInputVal("");
-    const updated = {...dataRef.current, weight:null};
-    setData(p=>({...p, weight:null}));
+  function handleSizeClass(sizeClass, label) {
+    addUser(label);
+    const updated = {...dataRef.current, sizeClass};
+    setData(p=>({...p, sizeClass}));
     dataRef.current = updated;
     setTimeout(() => goToNextStep(updated), 400);
   }
@@ -414,7 +402,7 @@ export default function App() {
         body:JSON.stringify({
           pet_type: data.petType,
           life_stage: data.ageCategory,
-          size: data.weight==null?"all":(data.weight<10?"small":"large"),
+          size: data.sizeClass || "all",
           body_condition: data.bodyCondition||"normal",
           health_concerns: data.healthConcerns||[],
           breed: data.breed,
@@ -495,15 +483,16 @@ export default function App() {
     );
 
     if (step==="WEIGHT") return (
-      <div className="concerns-wrap">
-        <div className="input-row">
-          <input className="text-input" type="number" placeholder="예: 5.2"
-            value={inputVal} onChange={e=>setInputVal(e.target.value)}
-            onKeyDown={e=>{if(e.key==="Enter"&&!e.nativeEvent.isComposing)handleWeight();}} autoFocus />
-          <span className="unit-label">kg</span>
-          <button className="send-btn" onClick={handleWeight}>→</button>
-        </div>
-        <button className="choice-btn ghost" onClick={handleWeightUnknown}>잘 모르겠어요</button>
+      <div className="btn-row" style={{flexWrap:"wrap"}}>
+        {data.petType==="dog" ? (
+          <>
+            <button className="choice-btn" onClick={()=>handleSizeClass("small","🐕 소형견 (10kg 미만)")}>🐕 소형견<br/><span style={{fontSize:"0.75em",opacity:0.7}}>10kg 미만</span></button>
+            <button className="choice-btn" onClick={()=>handleSizeClass("all","🐕 중형견 (10~25kg)")}>🐕 중형견<br/><span style={{fontSize:"0.75em",opacity:0.7}}>10~25kg</span></button>
+            <button className="choice-btn" onClick={()=>handleSizeClass("large","🐕 대형견 (25kg 이상)")}>🐕 대형견<br/><span style={{fontSize:"0.75em",opacity:0.7}}>25kg 이상</span></button>
+          </>
+        ) : (
+          <button className="choice-btn" onClick={()=>handleSizeClass("all","🐱 선택 완료")}>🐱 다음으로</button>
+        )}
       </div>
     );
 

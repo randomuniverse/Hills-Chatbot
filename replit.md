@@ -38,23 +38,23 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - `POST /api/classify-concerns` - Classify free-text health concerns into categories using Claude
 - `POST /api/parse-special` - Analyze special notes (pregnancy, medication, surgery) for additional filter conditions
 - `POST /api/chat-fallback` - Handle off-topic or contextual messages with Claude, step-aware responses
+- `POST /api/breed-comment` - Get breed-specific comment from Supabase breed_comments table
 - `POST /api/recommend` - Get product recommendations based on pet info (supports special_notes)
 - `GET /health` - Health check endpoint
 
 ## How It Works
-1. User can either type a free-text concern or click "제품 추천 받기" / use quick option bars
+1. User can either type a free-text concern or click "힐스 맞춤 제품 추천 받기"
 2. Free text is parsed by Claude via `/api/parse-intent` to extract pet type and concerns
 3. App confirms parsed info with context chips, then proceeds to guided flow
-4. Auth prompt (member/join/skip - demo placeholders)
-5. Step-by-step: pet type, breed, age, weight, body condition, health concerns
-6. Health concerns can be selected via buttons or typed in free text
-7. Special notes step: asks about pregnancy, medication, surgery recovery, etc.
-8. On confirmation, frontend POSTs to `/api/recommend` with special_notes
-9. Backend analyzes special notes via `/api/parse-special`, overrides life stage if needed
-10. Backend queries Supabase `products` table, scores candidates by health concern match
-11. Top candidates sent to Claude for final selection and reasoning (with special context)
-12. Results displayed as product cards with rank badges, tags, links, and special warnings
-13. Save CTA with Kakao login placeholder appears after results
+4. Step-by-step: pet type, breed (with breed comment), age, size class (dogs only), body condition, health concerns
+5. Health concerns selected via buttons only (14 categories per pet type)
+6. Special notes step: asks about pregnancy, medication, surgery recovery, etc.
+7. On confirmation, frontend POSTs to `/api/recommend` with size class
+8. Backend analyzes special notes via `/api/parse-special`, overrides life stage if needed
+9. Backend queries Supabase `products` table, scores candidates by health concern match
+10. Top candidates sent to Claude for final selection and reasoning (with special context)
+11. Results displayed as product cards with rank badges, tags, links, and special warnings
+12. Chime sound effect plays when results appear
 
 ## User Preferences
 - **Proactive suggestions**: Always suggest improvements, optimizations, and best practices without waiting for the user to ask. This is the user's project - act like a co-owner.
@@ -85,4 +85,8 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 - Enhanced product cards: food_form(건식/습식), flavor(맛), is_activbiome, product_line, description 표시
 - Supabase products table: 116개 제품 (dog 63, cat 53), 브랜드 2개 (사이언스 다이어트, 프리스크립션 다이어트)
 - Dynamic category sync: Backend fetches health_benefits from Supabase on startup (5분 캐시), frontend loads via /api/categories API. No more hardcoded concern lists.
-- Breed comment feature: Claude generates short 2-sentence comment about selected breed (traits + personality) via /api/breed-comment, displayed before age step for richer UX
+- Breed comment feature: Supabase breed_comments table (58 entries, 2 variants per breed) via /api/breed-comment, displayed before age step for richer UX
+- Weight input replaced with size class buttons (소형견/중형견/대형견) for dogs, cats skip this step
+- Health concerns step: removed free text input, button selection only
+- Result chime sound effect using Web Audio API (3-note ascending chime)
+- Fallback product images for discontinued products mapped to category URLs
