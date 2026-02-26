@@ -236,6 +236,7 @@ export default function App() {
 
   async function handleBreed(breed) {
     addUser(breed);
+    setStep("_WAIT");
     const updated = {...dataRef.current, breed};
     setData(p=>({...p, breed}));
     dataRef.current = updated;
