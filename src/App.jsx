@@ -417,6 +417,8 @@ export default function App() {
   }
 
   function handleAuth(choice) {
+    if (step !== "AUTH_PROMPT") return;
+    setStep("_PROCESSING");
     if (choice === "member") {
       addUser(t.authMemberU);
       addBot(t.authMemberB, null, 400);
