@@ -54,17 +54,17 @@ export default function App() {
     try {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-      [523.25, 659.25].forEach((freq, i) => {
+      [784, 1047].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "triangle";
+        osc.type = "sine";
         osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0, now + i * 0.06);
-        gain.gain.linearRampToValueAtTime(0.18, now + i * 0.06 + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.15);
+        gain.gain.setValueAtTime(0, now + i * 0.1);
+        gain.gain.linearRampToValueAtTime(0.12, now + i * 0.1 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.25);
         osc.connect(gain).connect(ctx.destination);
-        osc.start(now + i * 0.06);
-        osc.stop(now + i * 0.06 + 0.15);
+        osc.start(now + i * 0.1);
+        osc.stop(now + i * 0.1 + 0.25);
       });
     } catch {}
   }
@@ -73,16 +73,23 @@ export default function App() {
     try {
       const ctx = getAudioCtx();
       const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
+      const bufSize = ctx.sampleRate * 0.03;
+      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < bufSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 800;
       const gain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.value = 440;
-      osc.frequency.linearRampToValueAtTime(330, now + 0.08);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.1);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      src.connect(filter).connect(gain).connect(ctx.destination);
+      src.start(now);
+      src.stop(now + 0.06);
     } catch {}
   }
 
@@ -686,7 +693,7 @@ export default function App() {
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">힐스 펫 플래너</div>
           </div>
-          <button className="header-close-btn" onClick={() => {playClose(); setChatOpen(false);}}>✕</button>
+          <button className="header-close-btn" onClick={() => {playClose(); setTimeout(()=>setChatOpen(false), 80);}}>✕</button>
         </div>
       </header>
 
