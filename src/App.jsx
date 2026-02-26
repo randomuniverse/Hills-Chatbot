@@ -72,24 +72,18 @@ export default function App() {
   function playClose() {
     try {
       const ctx = getAudioCtx();
+      if (ctx.state === "suspended") ctx.resume();
       const now = ctx.currentTime;
-      const bufSize = ctx.sampleRate * 0.03;
-      const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
-      }
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 800;
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.12, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-      src.connect(filter).connect(gain).connect(ctx.destination);
-      src.start(now);
-      src.stop(now + 0.06);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.12);
     } catch {}
   }
 
@@ -693,7 +687,7 @@ export default function App() {
             <div className="header-title">Hill's Pet Planner</div>
             <div className="header-sub">힐스 펫 플래너</div>
           </div>
-          <button className="header-close-btn" onClick={() => {playClose(); setTimeout(()=>setChatOpen(false), 80);}}>✕</button>
+          <button className="header-close-btn" onClick={() => {playClose(); setTimeout(()=>setChatOpen(false), 150);}}>✕</button>
         </div>
       </header>
 
