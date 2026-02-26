@@ -150,6 +150,22 @@ const T = {
 
 const URL_LANG = new URLSearchParams(window.location.search).get("lang") === "en" ? "en" : "ko";
 
+/* ── Age-based filtering rules ── */
+const PUPPY_HIDDEN_CONCERNS_DOG = new Set(["노령 관리","신장 관리","심장 관리","간 관리","혈당","치아 관리"]);
+const PUPPY_HIDDEN_CONCERNS_CAT = new Set(["노령 관리","신장 관리","갑상선 관리","혈당","치아 관리","심장 관리","간 관리"]);
+const PUPPY_HIDDEN_SPECIAL = new Set(["임신/수유 중","Pregnant / Nursing"]);
+
+function getFilteredConcerns(list, petType, ageCategory) {
+  if (ageCategory !== "puppy") return list;
+  const hidden = petType === "dog" ? PUPPY_HIDDEN_CONCERNS_DOG : PUPPY_HIDDEN_CONCERNS_CAT;
+  return list.filter(c => !hidden.has(c));
+}
+
+function getFilteredSpecialOpts(opts, ageCategory) {
+  if (ageCategory !== "puppy") return opts;
+  return opts.filter(o => !PUPPY_HIDDEN_SPECIAL.has(o));
+}
+
 function buildSummary(d, lang) {
   const t = T[lang];
   const age = t.ages[d.ageCategory]||"";
@@ -547,8 +563,61 @@ export default function App() {
     dataRef.current = updatedData;
     setSpecial(""); setSelectedSpecial([]); setShowSpecialInput(false);
 
-    const summary = buildSummary(updatedData, lang);
-    addBot(`${t.summaryPre}\n\n${summary}${hasNotes ? `\n${t.spNoteWord}: ${finalNotes}` : ""}\n\n${t.confirmQ}`, "CONFIRM");
+    /* ── Contradiction validation ── */
+    const warnings = validateInputs(updatedData, lang);
+    if (warnings.length > 0) {
+      /* Auto-fix: remove contradictory concerns */
+      const cleaned = autoFixConcerns(updatedData);
+      setData(p => ({ ...p, healthConcerns: cleaned.healthConcerns, specialNotes: cleaned.specialNotes }));
+      dataRef.current = { ...dataRef.current, healthConcerns: cleaned.healthConcerns, specialNotes: cleaned.specialNotes };
+
+      const summary = buildSummary(cleaned, lang);
+      const warningText = warnings.join("\n");
+      addBot(`⚠️ ${warningText}\n\n${t.summaryPre}\n\n${summary}${cleaned.specialNotes ? `\n${t.spNoteWord}: ${cleaned.specialNotes}` : ""}\n\n${t.confirmQ}`, "CONFIRM");
+    } else {
+      const summary = buildSummary(updatedData, lang);
+      addBot(`${t.summaryPre}\n\n${summary}${hasNotes ? `\n${t.spNoteWord}: ${finalNotes}` : ""}\n\n${t.confirmQ}`, "CONFIRM");
+    }
+  }
+
+  function validateInputs(d, lang) {
+    const warnings = [];
+    const age = d.ageCategory;
+    const concerns = d.healthConcerns || [];
+    const notes = d.specialNotes || "";
+
+    if (age === "puppy") {
+      const puppyBad = d.petType === "dog" ? PUPPY_HIDDEN_CONCERNS_DOG : PUPPY_HIDDEN_CONCERNS_CAT;
+      const found = concerns.filter(c => puppyBad.has(c));
+      if (found.length) {
+        const names = found.map(c => lang === "en" ? (CONCERN_EN[c]||c) : c).join(", ");
+        warnings.push(lang === "en"
+          ? `"${names}" is not typical for pets under 1 year. It has been automatically removed.`
+          : `"${names}"은(는) 1살 미만에게 해당하지 않는 항목이라 자동으로 제외했어요.`);
+      }
+      if (notes.includes("임신") || notes.includes("수유") || notes.includes("pregnant") || notes.includes("nursing")) {
+        warnings.push(lang === "en"
+          ? `Pregnancy/nursing is unusual for pets under 1 year. It has been removed. Please consult a vet.`
+          : `1살 미만 반려동물의 임신/수유는 매우 드문 경우예요. 자동으로 제외했으며, 수의사 상담을 권장합니다.`);
+      }
+    }
+    return warnings;
+  }
+
+  function autoFixConcerns(d) {
+    const age = d.ageCategory;
+    let concerns = [...(d.healthConcerns || [])];
+    let notes = d.specialNotes || "";
+
+    if (age === "puppy") {
+      const puppyBad = d.petType === "dog" ? PUPPY_HIDDEN_CONCERNS_DOG : PUPPY_HIDDEN_CONCERNS_CAT;
+      concerns = concerns.filter(c => !puppyBad.has(c));
+      /* Remove pregnancy-related special notes for puppies */
+      const pregTerms = ["임신/수유 중","임신","수유","Pregnant / Nursing","pregnant","nursing"];
+      const parts = notes.split(", ").filter(p => !pregTerms.some(term => p.includes(term)));
+      notes = parts.join(", ");
+    }
+    return { ...d, healthConcerns: concerns, specialNotes: notes };
   }
 
   async function handleConfirm() {
@@ -652,7 +721,8 @@ export default function App() {
     );
 
     if (step==="CONCERNS") {
-      const list = data.petType==="dog"?dbConcerns.dog:dbConcerns.cat;
+      const rawList = data.petType==="dog"?dbConcerns.dog:dbConcerns.cat;
+      const list = getFilteredConcerns(rawList, data.petType, data.ageCategory);
       return (
         <div className="concerns-wrap">
           <div className="btn-grid-3">
@@ -670,7 +740,8 @@ export default function App() {
     }
 
     if (step==="SPECIAL") {
-      const specialOpts = [t.spPreg, t.spSurg, t.spAllergy, t.spRx];
+      const allSpecialOpts = [t.spPreg, t.spSurg, t.spAllergy, t.spRx];
+      const specialOpts = getFilteredSpecialOpts(allSpecialOpts, data.ageCategory);
       if (showSpecialInput) {
         return (
           <div className="concerns-wrap">
