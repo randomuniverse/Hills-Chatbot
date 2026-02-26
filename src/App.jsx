@@ -28,6 +28,7 @@ const CONCERN_EN = {
   "요로계 관리":"Urinary","식이 민감성":"Sensitivity","심장 관리":"Heart",
   "간 관리":"Liver","혈당":"Blood Sugar","노령 관리":"Senior Care",
   "헤어볼":"Hairball","갑상선 관리":"Thyroid","실내 생활":"Indoor",
+  "암 환자 지원":"Cancer Support","응급 관리":"Critical Care",
 };
 
 const T = {
@@ -436,7 +437,7 @@ export default function App() {
       const res = await fetchWithTimeout("/api/breed-comment", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ breed, pet_type: updated.petType })
+        body: JSON.stringify({ breed, pet_type: updated.petType, lang })
       }, 10000);
       const d = await res.json();
       setIsTyping(false);
