@@ -129,6 +129,9 @@ async def parse_intent(req: IntentRequest):
                 "1. concerns에는 반드시 위 '가능 값' 목록에 있는 정확한 문자열만 사용하세요. '암 환자 지원', '응급 관리' 등 목록에 없는 값을 절대 만들지 마세요.\n"
                 "   - 암/종양 진단 → concerns는 빈 배열[]로 두고, sympathy_msg에서 수의사 상담을 강력히 권고하세요.\n"
                 "   - 사료를 안 먹음/기호성 문제/입맛 → concerns를 빈 배열로 두고, sympathy_msg에서 기호성 문제에 공감하세요.\n"
+                "   - 고양이 털 빠짐/털 많이 빠짐/털 날림 → '헤어볼'과 '피부 건강' 둘 다 concerns에 포함하세요.\n"
+                "   - 강아지 털 빠짐/털 관리 → '피부 건강'을 concerns에 포함하세요.\n"
+                "   - 한 가지 증상이 여러 건강고민에 해당될 수 있습니다. 관련된 모든 카테고리를 포함하세요.\n"
                 "2. 당뇨, 신장질환, 암, 방광결석 등 진단받은 질환이 언급되면 sympathy_msg에 '수의사와 상담 후 처방식을 선택하시는 것이 중요합니다'를 반드시 포함하세요.\n"
                 "3. 보호자의 요청과 실제 상황이 모순될 때 (예: 2살인데 노령견 사료 요청) sympathy_msg에서 나이에 맞는 사료가 더 적합하다고 부드럽게 교정해주세요.\n"
                 "4. '갓 태어난', '신생아', '생후 며칠' 등 생후 4주 미만 동물은 사료를 먹을 수 없습니다. is_relevant=true로 두되, concerns=[]로 하고 sympathy_msg에 '아직 사료를 먹기 어려운 시기예요. 어미의 모유 수유가 가장 중요하며, 어려운 경우 전용 분유를 사용해주세요. 수의사와 상담을 권장드립니다.'라고 안내하세요.\n"
@@ -338,11 +341,13 @@ async def recommend(req: RecommendRequest):
         s = 0.0
         benefits = set(p.get("health_benefits") or [])
         concern_set = set(all_concerns)
-        # 건강고민 매칭 (핵심 점수)
-        s += len(concern_set & benefits) * 3.0
-        # 체형 보너스
+        matched = concern_set & benefits
+        total_concerns = len(concern_set) if concern_set else 1
+        s += len(matched) * 3.0
+        if total_concerns > 1:
+            s += (len(matched) / total_concerns) * 2.0
         if req.body_condition == "overweight" and "체중 관리" in benefits:
-            s += 2.0
+            s += 1.0
         elif req.body_condition == "underweight" and "체중 관리" not in benefits:
             s += 0.5
         # 액티브바이옴+ 보너스 (소화기 관련)
@@ -401,6 +406,7 @@ Hills 제품 후보:
 단, 맛이 명시되지 않은 처방식도 대안이 될 수 있습니다.
 기피 맛 제품만 있고 대안이 없으면, 기피 맛이라도 포함하되 individual_reasons에 맛 관련 안내를 추가하세요.
 
+**중요**: 건강고민이 여러 개일 경우, 각 고민을 커버하는 제품을 골고루 포함하세요. 특정 고민만 집중하지 마세요.
 **반드시 2~3개** 선택 후 JSON으로만 응답 (1개만 선택하지 마세요):
 {{
   "selected_indices": [1, 2],
