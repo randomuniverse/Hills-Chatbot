@@ -323,6 +323,12 @@ async def recommend(req: RecommendRequest):
         query = query.in_("size_category", [req.size, "all"])
 
     rows = query.execute().data or []
+    INVALID_URLS = {
+        "https://www.hillspet.co.kr/dog-food",
+        "https://www.hillspet.co.kr/cat-food",
+        "",
+    }
+    rows = [p for p in rows if p.get("product_url", "") not in INVALID_URLS]
     if not rows:
         raise HTTPException(404, "추천 가능한 제품이 없습니다.")
 
