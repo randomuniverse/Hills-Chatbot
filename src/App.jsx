@@ -292,7 +292,7 @@ export default function App() {
         if (doneRef.current) {
           const container = doneRef.current.closest(".chat-area");
           if (container) {
-            const offset = doneRef.current.offsetTop - 20;
+            const offset = doneRef.current.offsetTop - 50;
             container.scrollTo({ top: offset, behavior: "smooth" });
           }
         }
