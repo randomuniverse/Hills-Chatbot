@@ -542,7 +542,7 @@ body {
 }
 
 .footer {
-  padding: 16px 16px 28px;
+  padding: 20px 16px 20px;
   background: linear-gradient(180deg, #E8F1FB 0%, #D4E6F9 50%, #C2DAF5 100%);
   border-top: 1px solid rgba(27,94,166,0.15);
   display: flex;
@@ -857,6 +857,7 @@ body {
   font-family: 'Noto Sans KR', sans-serif;
   cursor: pointer;
   padding: 4px 8px;
+  margin-top: 8px;
   text-decoration: none;
   opacity: 0.7;
   transition: opacity 0.2s, color 0.2s;
