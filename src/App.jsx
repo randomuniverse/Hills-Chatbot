@@ -39,6 +39,7 @@ export default function App() {
   const [results, setResults]     = useState(null);
   const [showSave, setShowSave]   = useState(false);
   const [selectedSpecial, setSelectedSpecial] = useState([]);
+  const [showSpecialInput, setShowSpecialInput] = useState(false);
   const [dbConcerns, setDbConcerns] = useState({dog: FALLBACK_DOG, cat: FALLBACK_CAT});
   const bottomRef = useRef(null);
   const dataRef = useRef(data);
@@ -392,7 +393,7 @@ export default function App() {
     const updatedData = { ...dataRef.current, specialNotes: hasNotes ? finalNotes : "" };
     setData(p => ({ ...p, specialNotes: hasNotes ? finalNotes : "" }));
     dataRef.current = updatedData;
-    setSpecial(""); setSelectedSpecial([]);
+    setSpecial(""); setSelectedSpecial([]); setShowSpecialInput(false);
 
     const summary = buildSummary(updatedData);
     addBot(`입력하신 내용을 정리했어요. ✅\n\n${summary}${hasNotes ? `\n특이사항: ${finalNotes}` : ""}\n\n이대로 맞춤 추천을 받으시겠어요?`, "CONFIRM");
@@ -436,7 +437,7 @@ export default function App() {
 
   function handleRestart() {
     setMessages([{role:"bot", text:"안녕하세요! <span class=\"wave\">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!"}]);
-    setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]);
+    setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]); setShowSpecialInput(false);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
     setResults(null); setShowSave(false);
   }
@@ -516,7 +517,22 @@ export default function App() {
     }
 
     if (step==="SPECIAL") {
-      const specialOpts = ["임신/수유 중","약 복용 중","수술 후 회복 중","알레르기 있음"];
+      const specialOpts = ["임신/수유 중","수술 후 회복 중 / 약 복용 중","알레르기 있음","처방식 먹는 중"];
+      if (showSpecialInput) {
+        return (
+          <div className="concerns-wrap">
+            <div className="free-input-wrap">
+              <div className="free-input-label">특이사항을 자유롭게 입력해주세요</div>
+              <textarea className="free-input"
+                placeholder="예: 치킨 맛 싫어해요, 연어 맛 선호해요, 알레르기가 있어요..."
+                value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
+            </div>
+            <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>
+              {specialNotes.trim() ? "입력 완료 →" : "특별사항 없어요 →"}
+            </button>
+          </div>
+        );
+      }
       return (
         <div className="concerns-wrap">
           <div className="btn-grid-2">
@@ -525,8 +541,8 @@ export default function App() {
                 className={`choice-btn small${selectedSpecial.includes(opt)?" selected":""}`}
                 onClick={()=>toggleSpecialOption(opt)}>{opt}</button>
             ))}
-            <button className={`choice-btn small ghost-inline${selectedSpecial.length===0 && !specialNotes.trim() ? " selected" : ""}`}
-              onClick={()=>handleSpecial("")}>없어요</button>
+            <button className="choice-btn small ghost-inline"
+              onClick={()=>setShowSpecialInput(true)}>직접 입력 ✏️</button>
           </div>
           <div className="free-input-wrap">
             <div className="free-input-label">기타 (맛 선호, 기피 재료 등)</div>
@@ -534,7 +550,9 @@ export default function App() {
               placeholder="예: 치킨 맛 싫어해요, 연어 맛 선호해요..."
               value={specialNotes} onChange={e=>setSpecial(e.target.value)} />
           </div>
-          <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>다음 →</button>
+          <button className="next-btn" onClick={()=>handleSpecial(specialNotes)}>
+            {selectedSpecial.length>0 || specialNotes.trim() ? "다음 →" : "특별사항 없어요 →"}
+          </button>
         </div>
       );
     }
