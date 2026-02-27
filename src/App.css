@@ -479,11 +479,13 @@ body {
 }
 .card-reason {
   font-size: 13px; color: var(--gray-700); line-height: 1.6;
-  padding: 10px 12px;
-  background: var(--gray-100);
-  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(0,85,166,0.04), rgba(0,85,166,0.01));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   margin-bottom: 12px;
-  border-left: 3px solid var(--blue);
+  border-left: 4px solid;
+  border-image: linear-gradient(180deg, var(--blue), #1B3A5C) 1;
+  position: relative;
 }
 .card-link {
   display: flex; align-items: center; justify-content: center; gap: 6px;
