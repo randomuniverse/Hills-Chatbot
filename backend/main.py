@@ -141,6 +141,7 @@ class RecommendRequest(BaseModel):
     breed: Optional[str] = None
     pet_name: Optional[str] = None
     special_notes: Optional[str] = None
+    food_form_preference: Optional[str] = None  # "dry", "wet", or None (no preference)
     lang: Optional[str] = "ko"
 
 class BreedCommentRequest(BaseModel):
@@ -168,6 +169,7 @@ def _build_intent_prompt(text, is_en):
             '  "pet_type": "dog" or "cat" or null,\n'
             '  "breed": "breed name in KOREAN" or null (e.g., "진돗개", "말티즈", "페르시안"),\n'
             '  "age_category": "puppy"(<1yr) or "adult"(1-7yr) or "senior7"(7-11yr) or "senior11"(11+yr) or null,\n'
+            '  "body_condition": "underweight" or "normal" or "overweight" or null (detect from words like fat/chubby/skinny/thin/overweight/slim),\n'
             f'  "concerns": [use ONLY these exact Korean strings: {dog_concerns}, {cat_concerns}],\n'
             '  "sympathy_msg": "A warm empathetic English message, 1-2 sentences. Include brief summary of the issue.",\n'
             '  "missing": ["pet_type","age","weight" etc.]\n'
@@ -187,6 +189,7 @@ def _build_intent_prompt(text, is_en):
         '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
         '  "breed": "품종명(한글)" 또는 null (예: "진돗개", "말티즈", "페르시안" 등),\n'
         '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
+        '  "body_condition": "underweight" 또는 "normal" 또는 "overweight" 또는 null (뚱뚱/살찐/마른/비만/과체중/야윈 등 체형 관련 단어 감지),\n'
         '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
         '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
         '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
@@ -444,6 +447,18 @@ async def recommend(req: RecommendRequest):
         # 처방식 페널티 (수의사 상담 없을 때)
         if p.get("is_prescription") and not (special and (special.get("vet_consult_required") or special.get("force_rx"))):
             s -= 1.0
+        # 건식/습식 선호 보너스
+        if req.food_form_preference:
+            pf = p.get("food_form", "")
+            pref_map = {"dry": "건식", "wet": {"습식","캔","파우치","트레이","스튜"}}
+            if req.food_form_preference == "dry" and pf == "건식":
+                s += 2.0
+            elif req.food_form_preference == "wet" and pf in {"습식","캔","파우치","트레이","스튜"}:
+                s += 2.0
+            elif req.food_form_preference == "dry" and pf != "건식":
+                s -= 1.0
+            elif req.food_form_preference == "wet" and pf not in {"습식","캔","파우치","트레이","스튜"}:
+                s -= 1.0
         return s
     rows.sort(key=score, reverse=True)
 

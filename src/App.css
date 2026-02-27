@@ -624,6 +624,17 @@ body {
 .choice-btn.ghost-inline:hover { border-color: var(--gray-400); color: var(--gray-600); }
 .choice-btn.ghost-inline.selected { border-color: var(--blue); color: var(--blue); background: rgba(27,94,166,0.06); }
 
+/* Body condition button indicators */
+.choice-btn.body-underweight::before,
+.choice-btn.body-normal::before,
+.choice-btn.body-overweight::before {
+  content: ""; display: inline-block; width: 8px; height: 8px;
+  border-radius: 50%; margin-right: 6px; vertical-align: middle;
+}
+.choice-btn.body-underweight::before { background: #64B5F6; }
+.choice-btn.body-normal::before { background: #66BB6A; }
+.choice-btn.body-overweight::before { background: #FF8A65; }
+
 .concerns-wrap { display: flex; flex-direction: column; gap: 10px; }
 .concerns-wrap.special-bottom { justify-content: flex-end; flex: 1; }
 .special-direct-input { grid-column: 1 / -1 !important; }

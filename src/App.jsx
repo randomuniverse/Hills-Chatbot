@@ -38,9 +38,12 @@ const T = {
     cta:"힐스 맞춤 제품 추천 받기", placeholder:"힐스와 상담하기",
     dog:"🐶 강아지", cat:"🐱 고양이",
     ages:{puppy:"1살 미만",adult:"1~7살",senior7:"7~11살",senior11:"11살 이상"},
-    body:{underweight:"🔻 마름",normal:"✅ 정상",overweight:"🔺 과체중"},
+    body:{underweight:"마름",normal:"정상",overweight:"과체중"},
     bodyLabel:{underweight:"마름",normal:"정상",overweight:"과체중"},
     size:{small:"소형",all:"중형",large:"대형"}, sizeWord:"체급", bodyWord:"체형",
+    foodForm:{dry:"🥣 건식",wet:"🍲 습식",skip:"상관없어요 →"},
+    foodFormLabel:{dry:"건식",wet:"습식",skip:""},
+    pickFood:"사료 형태 선호가 있으신가요?",
     concernsWord:"건강 고민", none:"없음",
     startUser:"맞춤 사료 추천받기", startBot:"시작해볼게요! 먼저 회원 여부를 확인할게요.",
     yesStart:"네, 시작할게요 →", startOver:"처음부터",
@@ -97,9 +100,12 @@ const T = {
     cta:"Get Personalized Recommendation", placeholder:"Chat with Hill's",
     dog:"🐶 Dog", cat:"🐱 Cat",
     ages:{puppy:"Under 1 yr",adult:"1–7 yrs",senior7:"7–11 yrs",senior11:"11+ yrs"},
-    body:{underweight:"🔻 Thin",normal:"✅ Normal",overweight:"🔺 Overweight"},
+    body:{underweight:"Thin",normal:"Normal",overweight:"Overweight"},
     bodyLabel:{underweight:"Thin",normal:"Normal",overweight:"Overweight"},
     size:{small:"Small",all:"Medium",large:"Large"}, sizeWord:"Size", bodyWord:"Body",
+    foodForm:{dry:"🥣 Dry Food",wet:"🍲 Wet Food",skip:"No preference →"},
+    foodFormLabel:{dry:"Dry",wet:"Wet",skip:""},
+    pickFood:"Any preference on food type?",
     concernsWord:"Health concerns", none:"None",
     startUser:"Get a recommendation", startBot:"Great, let's find the best food for your pet! First, a quick membership check.",
     yesStart:"Yes, let's go →", startOver:"Start over",
@@ -238,7 +244,10 @@ function buildSummary(d, lang) {
   const sizeText = t.size[d.sizeClass]||"";
   const breed = lang==="en" ? (BREED_EN[d.breed]||d.breed) : d.breed;
   const concerns = d.healthConcerns?.filter(c=>c!=="없음").map(c=>lang==="en"?(CONCERN_EN[c]||c):c);
-  return `${d.petType==="dog"?"🐶":"🐱"} ${breed||""} · ${age}\n${t.sizeWord} ${sizeText} · ${t.bodyWord} ${body}\n${t.concernsWord}: ${concerns?.join(", ")||t.none}`;
+  const foodPref = d.foodFormPref ? (t.foodFormLabel[d.foodFormPref]||"") : "";
+  let line2 = `${t.sizeWord} ${sizeText} · ${t.bodyWord} ${body}`;
+  if (foodPref) line2 += ` · ${foodPref}`;
+  return `${d.petType==="dog"?"🐶":"🐱"} ${breed||""} · ${age}\n${line2}\n${t.concernsWord}: ${concerns?.join(", ")||t.none}`;
 }
 
 export default function App() {
@@ -444,6 +453,12 @@ export default function App() {
       const newData = { petType: parsed.pet_type, healthConcerns: parsed.concerns||[] };
       if (parsed.age_category) newData.ageCategory = parsed.age_category;
       if (parsed.breed) newData.breed = parsed.breed;
+      if (parsed.body_condition && ["underweight","normal","overweight"].includes(parsed.body_condition)) {
+        newData.bodyCondition = parsed.body_condition;
+        if (parsed.body_condition === "overweight" && !newData.healthConcerns.includes("체중 관리")) {
+          newData.healthConcerns = [...newData.healthConcerns, "체중 관리"];
+        }
+      }
       setData(p=>({...p, ...newData}));
       dataRef.current = {...dataRef.current, ...newData};
 
@@ -460,6 +475,7 @@ export default function App() {
           if (parsed.age_category) {
             if (t.ages[parsed.age_category]) chips.push(`📅 ${t.ages[parsed.age_category]}`);
           }
+          if (parsed.body_condition && t.bodyLabel[parsed.body_condition]) chips.push(`⚖️ ${t.bodyLabel[parsed.body_condition]}`);
           if (parsed.concerns?.length) chips.push(...parsed.concerns.map(c=>cd(c)));
           const chipHtml = chips.length
             ? `<div class="context-chip-wrap">${chips.map(c=>`<span class="context-chip">✓ ${c}</span>`).join("")}</div>`
@@ -479,6 +495,7 @@ export default function App() {
     if (!d.breed) return { step: "BREED", msg: t.pickBreed(d.petType) };
     if (!d.ageCategory) return { step: "AGE", msg: t.pickAge };
     if (!d.bodyCondition) return { step: "BODY", msg: t.pickBody };
+    if (d.foodFormPref === undefined) return { step: "FOOD_FORM", msg: t.pickFood };
     if (!d.healthConcerns || d.healthConcerns.length === 0) return { step: "CONCERNS", msg: t.pickConcerns };
     return { step: "CONCERNS", msg: t.editConcerns };
   }
@@ -596,16 +613,14 @@ export default function App() {
 
   function bodyContextMsg(val, d) {
     const breed = lang==="en" ? (BREED_EN[d.breed]||d.breed) : d.breed;
-    const age = lang==="en" ? (T.en.ages[d.ageCategory]||"") : (T.ko.ages[d.ageCategory]||"");
-    const baseQ = (d.healthConcerns?.length) ? t.editConcerns : t.pickConcerns;
     if (lang === "en") {
-      if (val==="normal") return `Great, ${breed} is at a healthy weight! 👍 Now let's check for any health concerns.\n\n${baseQ}`;
-      if (val==="overweight") return `Got it — I'll keep weight management in mind for ${breed}. 📋 We'll prioritize this in the recommendation.\n\n${baseQ}`;
-      return `Understood — we'll look for nutrition that helps ${breed} gain healthy weight. 📋\n\n${baseQ}`;
+      if (val==="normal") return `Great, ${breed} is at a healthy weight! 👍\n\n${t.pickFood}`;
+      if (val==="overweight") return `Got it — I'll keep weight management in mind for ${breed}. 📋\n\n${t.pickFood}`;
+      return `Understood — we'll look for nutrition that helps ${breed} gain healthy weight. 📋\n\n${t.pickFood}`;
     }
-    if (val==="normal") return `${breed}, 정상 체형이군요! 👍 건강하게 유지할 수 있도록 도와드릴게요.\n\n${baseQ}`;
-    if (val==="overweight") return `알겠어요! ${breed}의 체중 관리를 우선적으로 고려해서 추천할게요. 📋\n\n${baseQ}`;
-    return `${breed}가 조금 마른 편이군요. 건강한 체중 증가를 위한 영양을 찾아볼게요. 📋\n\n${baseQ}`;
+    if (val==="normal") return `${breed}, 정상 체형이군요! 👍\n\n${t.pickFood}`;
+    if (val==="overweight") return `알겠어요! ${breed}의 체중 관리를 우선적으로 고려할게요. 📋\n\n${t.pickFood}`;
+    return `${breed}가 조금 마른 편이군요. 건강한 체중 증가를 위한 영양을 찾아볼게요. 📋\n\n${t.pickFood}`;
   }
 
   function handleAge(cat, label) {
@@ -653,8 +668,25 @@ export default function App() {
 
     /* A: contextual body message if breed is known */
     if (updated.breed) {
-      addBot(bodyContextMsg(val, updated), "CONCERNS");
-    } else if (autoConcerns.length) {
+      addBot(bodyContextMsg(val, updated), "FOOD_FORM");
+    } else {
+      addBot(t.pickFood, "FOOD_FORM");
+    }
+  }
+
+  function handleFoodForm(val) {
+    if (step !== "FOOD_FORM") return;
+    playTick();
+    setStep("_PROCESSING");
+    const label = t.foodForm[val];
+    addUser(label);
+    const pref = val === "skip" ? null : val;
+    const updated = {...dataRef.current, foodFormPref: pref};
+    setData(p=>({...p, foodFormPref: pref}));
+    dataRef.current = updated;
+
+    const autoConcerns = updated.healthConcerns || [];
+    if (autoConcerns.length) {
       setSelected(autoConcerns.filter(c => c !== "없음"));
       addBot(t.editConcerns, "CONCERNS");
     } else {
@@ -859,6 +891,7 @@ export default function App() {
           breed: data.breed,
           pet_name: data.petName,
           special_notes: data.specialNotes || "",
+          food_form_preference: data.foodFormPref || null,
           lang,
         })
       });
@@ -949,7 +982,15 @@ export default function App() {
     if (step==="BODY") return (
       <div className="btn-row">
         {["underweight","normal","overweight"].map(v=>(
-          <button key={v} className="choice-btn" onClick={()=>handleBody(v,t.body[v])}>{t.body[v]}</button>
+          <button key={v} className={`choice-btn body-${v}`} onClick={()=>handleBody(v,t.body[v])}>{t.body[v]}</button>
+        ))}
+      </div>
+    );
+
+    if (step==="FOOD_FORM") return (
+      <div className="btn-row" style={{flexWrap:"wrap"}}>
+        {["dry","wet","skip"].map(v=>(
+          <button key={v} className={`choice-btn${v==="skip"?" ghost":""}`} onClick={()=>handleFoodForm(v)}>{t.foodForm[v]}</button>
         ))}
       </div>
     );
@@ -1199,7 +1240,7 @@ export default function App() {
 
       <footer className="footer">
         {step!=="LOADING"&&step!=="START"&&renderButtons()}
-        {["PET_TYPE","BREED","AGE","BODY","CONCERNS","SPECIAL","CONFIRM"].includes(step)&&(
+        {["PET_TYPE","BREED","AGE","BODY","FOOD_FORM","CONCERNS","SPECIAL","CONFIRM"].includes(step)&&(
           <button className="restart-link" onClick={handleRestart}>{t.restartLink}</button>
         )}
         {step==="START"&&!isTyping&&messages.length>0&&(
