@@ -443,7 +443,13 @@ body {
   color: var(--text);
   line-height: 1.3; margin-bottom: 3px;
 }
-.card-brand { font-size: 11.5px; color: var(--gray-500); }
+.card-brand { font-size: 11.5px; color: var(--gray-500); line-height: 1; }
+.brand-badge {
+  display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+  color: #fff; padding: 2px 8px; border-radius: 3px; margin-top: 3px; line-height: 1.4;
+}
+.brand-sd { background: #D0202E; }
+.brand-pd { background: #1B3A5C; }
 .card-meta {
   display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 4px;
 }
@@ -493,9 +499,16 @@ body {
 
 .bubble-wrap.done-wrap { padding-top: 24px; }
 .bubble.bot.done-bubble {
-  background: var(--blue-dark) !important;
+  background: linear-gradient(135deg, #0F3D6E, #1B5EA6, #1A4F8C, #1B6DB5, #0F3D6E) !important;
+  background-size: 300% 300% !important;
+  animation: doneGradient 8s ease infinite !important;
   color: rgba(255,255,255,0.95) !important;
   border-radius: var(--radius-md) !important;
+}
+@keyframes doneGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 .done-banner {
   font-size: 16px; font-weight: 700; margin-bottom: 8px;
@@ -586,11 +599,17 @@ body {
   padding: 8px 6px; font-size: 12px; border-radius: 8px; text-align: center;
 }
 .choice-btn.primary {
-  background: var(--blue); color: var(--white); border-color: var(--blue);
+  color: var(--white); border-color: transparent;
   font-size: 15px; font-weight: 700; padding: 14px 24px;
-  box-shadow: var(--shadow-blue);
+  background: linear-gradient(135deg, #1B5EA6, #2A72C3, #1B8FD6, #2A72C3, #1B5EA6);
+  background-size: 300% 300%;
+  animation: ctaGradient 3s ease infinite;
+  box-shadow: 0 4px 18px rgba(27,94,166,0.35);
 }
-.choice-btn.primary:hover { background: var(--blue-dark); }
+.choice-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(27,94,166,0.45);
+}
 .choice-btn.ghost {
   background: transparent; border-color: var(--gray-300);
   color: var(--gray-500); box-shadow: none;

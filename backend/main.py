@@ -13,6 +13,43 @@ from dotenv import load_dotenv
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("hills-chatbot")
 
+# Korean → English breed name mapping (mirrors frontend BREED_EN)
+BREED_EN = {
+    "믹스견":"Mixed","말티즈":"Maltese","푸들":"Poodle","시츄":"Shih Tzu",
+    "포메라니안":"Pomeranian","치와와":"Chihuahua","비숑프리제":"Bichon Frise",
+    "요크셔테리어":"Yorkie","닥스훈트":"Dachshund","웰시코기":"Corgi",
+    "비글":"Beagle","골든리트리버":"Golden Retriever","래브라도":"Labrador",
+    "보더콜리":"Border Collie","허스키":"Husky","진돗개":"Jindo","삽살개":"Sapsali","기타":"Other",
+    "믹스묘":"Mixed","코리안숏헤어":"Korean Shorthair","페르시안":"Persian",
+    "메인쿤":"Maine Coon","브리티시숏헤어":"British Shorthair","스코티시폴드":"Scottish Fold",
+    "러시안블루":"Russian Blue","시암":"Siamese","랙돌":"Ragdoll","아비시니안":"Abyssinian",
+}
+
+# Korean → English concern name mapping
+CONCERN_EN = {
+    "소화기 관리":"Digestive Care","체중 관리":"Weight Management","관절 관리":"Joint Care",
+    "피부 건강":"Skin Health","신장 관리":"Kidney Care","치아 관리":"Dental Care",
+    "요로계 관리":"Urinary Care","식이 민감성":"Food Sensitivity","심장 관리":"Heart Care",
+    "간 관리":"Liver Care","혈당":"Blood Sugar","노령 관리":"Senior Care",
+    "헤어볼":"Hairball","갑상선 관리":"Thyroid Care","실내 생활":"Indoor",
+    "암 환자 지원":"Cancer Support","응급 관리":"Critical Care",
+}
+
+# Korean → English food form mapping
+FOOD_FORM_EN = {
+    "건식":"Dry","습식":"Wet","캔":"Canned","파우치":"Pouch",
+    "트레이":"Tray","스튜":"Stew","간식":"Treat",
+}
+
+# Korean → English flavor mapping
+FLAVOR_EN = {
+    "치킨":"Chicken","닭고기":"Chicken","연어":"Salmon","참치":"Tuna",
+    "소고기":"Beef","양고기":"Lamb","오리":"Duck","칠면조":"Turkey",
+    "돼지고기":"Pork","생선":"Fish","바다생선":"Ocean Fish",
+    "치킨&야채":"Chicken & Vegetables","연어&야채":"Salmon & Vegetables",
+    "치킨&보리":"Chicken & Barley","오리&감자":"Duck & Potato",
+}
+
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
@@ -20,6 +57,21 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
 claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], timeout=30.0)
+
+def _slug_to_product_name(url: str) -> str:
+    """Extract English product name from Hills URL slug.
+    e.g. '.../science-diet-puppy-large-breed-dry' → 'Science Diet Puppy Large Breed Dry'
+    """
+    if not url:
+        return ""
+    slug = url.rstrip("/").rsplit("/", 1)[-1]
+    return slug.replace("-", " ").title()
+
+def _url_to_en(url: str) -> str:
+    """Convert hillspet.co.kr URL to hillspet.com for English mode."""
+    if not url:
+        return url
+    return url.replace("www.hillspet.co.kr", "www.hillspet.com")
 
 _db_categories = {"dog": [], "cat": [], "last_refresh": 0}
 CATEGORY_REFRESH_INTERVAL = 300
@@ -78,6 +130,7 @@ class IntentRequest(BaseModel):
 class ClassifyRequest(BaseModel):
     text: str
     pet_type: str
+    lang: Optional[str] = "ko"
 
 class RecommendRequest(BaseModel):
     pet_type: str
@@ -99,6 +152,7 @@ class ParseSpecialRequest(BaseModel):
     text: str
     pet_type: str
     life_stage: str
+    lang: Optional[str] = "ko"
 
 def _build_intent_prompt(text, is_en):
     dog_concerns = ', '.join(get_concerns('dog'))
@@ -193,12 +247,18 @@ async def parse_intent(req: IntentRequest):
 @app.post("/api/classify-concerns")
 async def classify_concerns(req: ClassifyRequest):
     categories = get_concerns(req.pet_type)
+    is_en = getattr(req, 'lang', 'ko') == "en"
     try:
         resp = claude.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=256,
-            system="반려동물 영양 전문가. JSON으로만 응답.",
+            system="Pet nutrition specialist. Respond ONLY in JSON." if is_en else "반려동물 영양 전문가. JSON으로만 응답.",
             messages=[{"role":"user","content":(
+                f'Description: "{req.text}"\n'
+                f"Categories (use EXACT Korean strings): {', '.join(categories)}\n"
+                f'Match the description to categories. Respond in JSON: {{"concerns": [...]}}\n'
+                "IMPORTANT: concerns values must be the EXACT Korean strings from the categories list above."
+            ) if is_en else (
                 f"설명: \"{req.text}\"\n"
                 f"카테고리: {', '.join(categories)}\n"
                 f"해당 카테고리를 JSON으로: {{\"concerns\": [...]}}"
@@ -210,7 +270,7 @@ async def classify_concerns(req: ClassifyRequest):
         return {"concerns": [c for c in data.get("concerns",[]) if c in categories]}
     except anthropic.APITimeoutError:
         logger.error("classify-concerns: Claude API timeout")
-        raise HTTPException(504, "AI 응답 시간이 초과되었습니다. 다시 시도해주세요.")
+        raise HTTPException(504, "AI response timed out." if is_en else "AI 응답 시간이 초과되었습니다. 다시 시도해주세요.")
     except Exception as e:
         logger.error(f"classify-concerns error: {e}")
         return {"concerns": []}
@@ -243,12 +303,29 @@ async def breed_comment(req: BreedCommentRequest):
 
 @app.post("/api/parse-special")
 async def parse_special(req: ParseSpecialRequest):
+    is_en = getattr(req, 'lang', 'ko') == "en"
     try:
-        resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=400,
-            system="반려동물 영양 전문 상담사. JSON으로만 응답.",
-            messages=[{"role":"user","content":(
+        if is_en:
+            user_prompt = (
+                f'Pet owner special notes: "{req.text}"\n'
+                f"Pet: {'Dog' if req.pet_type=='dog' else 'Cat'}, Life stage: {req.life_stage}\n\n"
+                "Respond ONLY in JSON:\n"
+                "{\n"
+                '  "is_pregnant": true/false,\n'
+                '  "is_nursing": true/false,\n'
+                '  "has_medication": true/false,\n'
+                '  "force_rx": true/false,\n'
+                '  "add_concerns": ["use EXACT Korean health concern strings from DB"],\n'
+                '  "override_stage": "puppy/adult/senior7/senior11 or null",\n'
+                '  "vet_consult_required": true/false,\n'
+                '  "summary": "One-line English summary of special notes"\n'
+                "}\n\n"
+                "If pregnant/nursing, set override_stage to 'puppy' (puppy food is suitable for pregnant/nursing pets).\n"
+                "If on medication or post-surgery, set vet_consult_required to true.\n"
+                "IMPORTANT: add_concerns must use the exact Korean category strings (e.g., '소화기 관리', '체중 관리')."
+            )
+        else:
+            user_prompt = (
                 f"보호자 특이사항: \"{req.text}\"\n"
                 f"반려동물: {'강아지' if req.pet_type=='dog' else '고양이'}, 생애단계: {req.life_stage}\n\n"
                 "아래 JSON으로만 응답:\n"
@@ -264,7 +341,12 @@ async def parse_special(req: ParseSpecialRequest):
                 "}\n\n"
                 "임신/수유 중이면 override_stage를 'puppy'로 설정하세요 (임신/수유견에는 퍼피용이 적합).\n"
                 "약 복용 중이거나 수술 후면 vet_consult_required를 true로 설정하세요."
-            )}]
+            )
+        resp = claude.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=400,
+            system="Pet nutrition specialist. Respond ONLY in JSON." if is_en else "반려동물 영양 전문 상담사. JSON으로만 응답.",
+            messages=[{"role":"user","content":user_prompt}]
         )
         raw = resp.content[0].text.strip()
         if raw.startswith("```"): raw = raw.split("```")[1].lstrip("json").strip()
@@ -306,7 +388,8 @@ async def recommend(req: RecommendRequest):
             special_resp = await parse_special(ParseSpecialRequest(
                 text=req.special_notes,
                 pet_type=req.pet_type,
-                life_stage=req.life_stage
+                life_stage=req.life_stage,
+                lang=req.lang or "ko"
             ))
             special = special_resp
         except Exception as e:
@@ -329,8 +412,9 @@ async def recommend(req: RecommendRequest):
         "",
     }
     rows = [p for p in rows if p.get("product_url", "") not in INVALID_URLS]
+    is_en = req.lang == "en"
     if not rows:
-        raise HTTPException(404, "추천 가능한 제품이 없습니다.")
+        raise HTTPException(404, "No products available for recommendation." if is_en else "추천 가능한 제품이 없습니다.")
 
     rows = filter_by_stage(rows, effective_stage, special, req.pet_type)
 
@@ -372,23 +456,40 @@ async def recommend(req: RecommendRequest):
         top = (general[:5] + rx[:2])[:7]
 
     if not top:
-        raise HTTPException(404, "조건에 맞는 제품이 없습니다.")
+        raise HTTPException(404, "No products match the given criteria." if is_en else "조건에 맞는 제품이 없습니다.")
 
-    summary = "\n".join([
-        f"[{i+1}] {p['product_name_kr']} ({p.get('brand','')}) "
-        f"| 효능: {', '.join(p.get('health_benefits') or [])} "
-        f"| 형태: {p.get('food_form','')}"
-        f"{' | 맛: '+p['flavor'] if p.get('flavor') else ''}"
-        f"{'  | 액티브바이옴+' if p.get('is_activbiome') else ''}"
-        f"{' | 라인: '+p['product_line'] if p.get('product_line') else ''}"
-        f" | 처방식: {'예' if p.get('is_prescription') else '아니오'} "
-        f"| {(p.get('description') or '')[:120]}"
-        for i,p in enumerate(top)
-    ])
+    if is_en:
+        summary = "\n".join([
+            f"[{i+1}] {_slug_to_product_name(p.get('product_url',''))} ({p.get('brand','')}) "
+            f"| Benefits: {', '.join(CONCERN_EN.get(b, b) for b in (p.get('health_benefits') or []))} "
+            f"| Form: {p.get('food_form','')}"
+            f"{' | Flavor: '+p['flavor'] if p.get('flavor') else ''}"
+            f"{'  | ActivBiome+' if p.get('is_activbiome') else ''}"
+            f"{' | Line: '+p['product_line'] if p.get('product_line') else ''}"
+            f" | Prescription: {'Yes' if p.get('is_prescription') else 'No'} "
+            f"| {(p.get('description') or '')[:120]}"
+            for i,p in enumerate(top)
+        ])
+    else:
+        summary = "\n".join([
+            f"[{i+1}] {p['product_name_kr']} ({p.get('brand','')}) "
+            f"| 효능: {', '.join(p.get('health_benefits') or [])} "
+            f"| 형태: {p.get('food_form','')}"
+            f"{' | 맛: '+p['flavor'] if p.get('flavor') else ''}"
+            f"{'  | 액티브바이옴+' if p.get('is_activbiome') else ''}"
+            f"{' | 라인: '+p['product_line'] if p.get('product_line') else ''}"
+            f" | 처방식: {'예' if p.get('is_prescription') else '아니오'} "
+            f"| {(p.get('description') or '')[:120]}"
+            for i,p in enumerate(top)
+        ])
 
-    is_en = req.lang == "en"
     body_label = {"underweight":"Thin","normal":"Normal","overweight":"Overweight"}.get(req.body_condition,"Normal") if is_en else {"underweight":"마름","normal":"정상","overweight":"과체중"}.get(req.body_condition,"정상")
-    concerns   = ", ".join(all_concerns) if all_concerns else ("None" if is_en else "없음")
+    if is_en:
+        concerns = ", ".join(CONCERN_EN.get(c, c) for c in all_concerns) if all_concerns else "None"
+        breed_display = BREED_EN.get(req.breed, req.breed) if req.breed else "breed not specified"
+    else:
+        concerns = ", ".join(all_concerns) if all_concerns else "없음"
+        breed_display = req.breed or "품종 미입력"
     pet_name   = req.pet_name or ("your pet" if is_en else "반려동물")
     special_summary = special.get("summary","") if special else ""
     vet_required = special.get("vet_consult_required", False) if special else False
@@ -396,7 +497,7 @@ async def recommend(req: RecommendRequest):
     if is_en:
         prompt = f"""
 Pet information:
-- Name: {pet_name} / Type: {"Dog" if req.pet_type=="dog" else "Cat"} ({req.breed or "breed not specified"})
+- Name: {pet_name} / Type: {"Dog" if req.pet_type=="dog" else "Cat"} ({breed_display})
 - Life stage: {effective_stage} / Body: {body_label} / Health concerns: {concerns}
 - Special notes: {special_summary or "None"}
 - Vet consultation needed: {"Yes" if vet_required else "No"}
@@ -405,7 +506,7 @@ Hills product candidates:
 {summary}
 
 **Important**: If multiple health concerns exist, include products covering different concerns. Don't focus on just one.
-**Personalization**: Always mention the pet's breed name ({req.breed or "your pet"}) in overall_reasoning and individual_reasons. Write as if speaking directly to the owner about THEIR specific pet.
+**Personalization**: Always mention the pet's breed name ({breed_display}) in overall_reasoning and individual_reasons. Write as if speaking directly to the owner about THEIR specific pet.
 **Select exactly 2-3 products** and respond ONLY in JSON (never select just 1):
 {{
   "selected_indices": [1, 2],
@@ -417,7 +518,7 @@ Hills product candidates:
     else:
         prompt = f"""
 반려동물 정보:
-- 이름: {pet_name} / 종류: {"강아지" if req.pet_type=="dog" else "고양이"} ({req.breed or "품종 미입력"})
+- 이름: {pet_name} / 종류: {"강아지" if req.pet_type=="dog" else "고양이"} ({breed_display})
 - 생애단계: {effective_stage} / 체형: {body_label} / 건강고민: {concerns}
 - 특이사항: {special_summary or "없음"}
 - 수의사 상담 필요: {"예" if vet_required else "아니오"}
@@ -429,7 +530,7 @@ Hills 제품 후보:
 기피 맛 제품만 있고 대안이 없으면, 기피 맛이라도 포함하되 individual_reasons에 맛 관련 안내를 추가하세요.
 
 **중요**: 건강고민이 여러 개일 경우, 각 고민을 커버하는 제품을 골고루 포함하세요. 특정 고민만 집중하지 마세요.
-**개인화**: overall_reasoning과 individual_reasons에 반드시 품종명({req.breed or "반려동물"})을 언급하세요. 보호자에게 직접 이야기하듯, 해당 반려동물만을 위한 맞춤 설명으로 작성하세요.
+**개인화**: overall_reasoning과 individual_reasons에 반드시 품종명({breed_display})을 언급하세요. 보호자에게 직접 이야기하듯, 해당 반려동물만을 위한 맞춤 설명으로 작성하세요.
 **반드시 2~3개** 선택 후 JSON으로만 응답 (1개만 선택하지 마세요):
 {{
   "selected_indices": [1, 2],
@@ -452,7 +553,7 @@ Hills 제품 후보:
         ai = json.loads(raw)
     except anthropic.APITimeoutError:
         logger.error("recommend: Claude API timeout")
-        raise HTTPException(504, "AI 응답 시간이 초과되었습니다. 다시 시도해주세요.")
+        raise HTTPException(504, "AI response timed out. Please try again." if is_en else "AI 응답 시간이 초과되었습니다. 다시 시도해주세요.")
     except Exception as e:
         logger.error(f"recommend AI scoring error: {e}")
         ai = {"selected_indices": [1], "overall_reasoning": "", "individual_reasons": [], "prescription_note": None, "special_warning": None}
@@ -464,16 +565,17 @@ Hills 제품 후보:
         "products": [{
             "id": str(p["id"]),
             "product_name_kr": p["product_name_kr"],
+            "product_name_en": _slug_to_product_name(p.get("product_url","")) if is_en else "",
             "brand": p.get("brand",""),
             "health_benefits": p.get("health_benefits") or [],
             "is_prescription": p.get("is_prescription",False),
-            "product_url": p.get("product_url",""),
+            "product_url": _url_to_en(p.get("product_url","")) if is_en else p.get("product_url",""),
             "image_url": _product_images.get(p.get("product_url",""), ""),
-            "food_form": p.get("food_form",""),
-            "flavor": p.get("flavor",""),
+            "food_form": FOOD_FORM_EN.get(p.get("food_form",""), p.get("food_form","")) if is_en else p.get("food_form",""),
+            "flavor": FLAVOR_EN.get(p.get("flavor",""), p.get("flavor","")) if is_en else p.get("flavor",""),
             "is_activbiome": p.get("is_activbiome",False),
             "product_line": p.get("product_line",""),
-            "description": p.get("description",""),
+            "description": "" if is_en else p.get("description",""),
             "reasoning": reasons[i] if i<len(reasons) else "",
         } for i,p in enumerate(selected)],
         "overall_reasoning": ai.get("overall_reasoning",""),

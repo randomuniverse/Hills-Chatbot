@@ -93,7 +93,7 @@ const T = {
   },
   en: {
     headerSub:"AI Pet Nutrition Advisor",
-    greeting:'Hello! <span class="wave">👋</span>\nI\'m the **Hill\'s Pet Planner**, your AI pet nutrition advisor.\nLet me find the perfect product for your pet!',
+    greeting:'Hello! <span class="wave">👋</span>\nI\'m the **Hill\'s Pet Planner**, your AI nutrition advisor.\nI\'ll help you find the **perfect nutrition match**!',
     cta:"Get Personalized Recommendation", placeholder:"Chat with Hill's",
     dog:"🐶 Dog", cat:"🐱 Cat",
     ages:{puppy:"Under 1 yr",adult:"1–7 yrs",senior7:"7–11 yrs",senior11:"11+ yrs"},
@@ -101,35 +101,35 @@ const T = {
     bodyLabel:{underweight:"Thin",normal:"Normal",overweight:"Overweight"},
     size:{small:"Small",all:"Medium",large:"Large"}, sizeWord:"Size", bodyWord:"Body",
     concernsWord:"Health concerns", none:"None",
-    startUser:"Get a recommendation", startBot:"Let's get started! First, let me check your membership.",
-    yesStart:"Yes, let's start →", startOver:"Start over",
-    restartConfirm:"Sure! Let's go through it step by step.",
-    authPrompt:"Let me check your membership for a more accurate recommendation.",
-    authMember:"Existing member", authJoin:"Sign up", authSkip:"Just proceed →",
+    startUser:"Get a recommendation", startBot:"Great, let's find the best food for your pet! First, a quick membership check.",
+    yesStart:"Yes, let's go →", startOver:"Start over",
+    restartConfirm:"No problem! Let's start fresh.",
+    authPrompt:"Quick membership check for a better experience.",
+    authMember:"Existing member", authJoin:"Sign up", authSkip:"Skip for now →",
     authMemberU:"Continue as member", authMemberB:"Welcome back! 🙌",
     authJoinU:"Sign up first", authJoinB:"Your results will be saved after signing up! 😊",
-    authSkipU:"Just proceed", authSkipB:"Got it!",
-    pickPet:"Please select your pet type.",
-    pickBreed:(pt)=>`Please select your ${pt==="dog"?"dog":"cat"} breed.`,
-    pickAge:"How old is your pet?", pickBody:"What is your pet's body condition?",
-    pickConcerns:"Do you have any health concerns?\nPlease select all that apply.",
-    editConcerns:"You can add or modify health concerns.\nPlease select all that apply.",
-    fast:(m)=>`I already have some info, let's move quickly! 😊\n${m}`,
-    next:"Next →", noConcern:"No concerns →",
-    specialQ:"Almost done! One last question.\n\nDo any of the following apply?",
+    authSkipU:"Skip for now", authSkipB:"No worries, let's dive in!",
+    pickPet:"Who are we shopping for?",
+    pickBreed:(pt)=>`What breed is your ${pt==="dog"?"dog":"cat"}?`,
+    pickAge:"How old is your pet? 🎂", pickBody:"How would you describe their build?",
+    pickConcerns:"Any health goals or concerns?\nSelect all that apply.",
+    editConcerns:"You can add or update health concerns.\nSelect all that apply.",
+    fast:(m)=>`I already have some info — let's move quickly! 😊\n${m}`,
+    next:"Next →", noConcern:"All healthy! →",
+    specialQ:"Almost there! Just one more thing.\n\nDo any of these apply?",
     spPreg:"Pregnant / Nursing", spSurg:"Post-surgery / On medication",
-    spAllergy:"Has allergies", spRx:"On prescription diet", spDirect:"Type manually ✏️",
-    spLabel:"Please describe any special notes",
+    spAllergy:"Has allergies", spRx:"On prescription diet", spDirect:"Type it in ✏️",
+    spLabel:"Anything else we should know?",
     spPlaceholder:"e.g., Doesn't like chicken, prefers salmon, has allergies...",
-    spDone:"Done →", spNone:"No special notes →", spBack:"← Back to buttons",
+    spDone:"Done →", spNone:"Nope, all good! →", spBack:"← Back to buttons",
     spNoneUser:"No special notes", spNoteWord:"Special notes",
-    summaryPre:"Here's a summary of your input. ✅", confirmQ:"Shall we proceed with the recommendation?",
-    confirmBtn:"✨ Get Recommendation", confirmU:"Yes, recommend! ✨", recommendU:"Yes, let's go!",
-    analyzing:"Analyzing... please wait a moment 🔍",
+    summaryPre:"Here's what we have so far. ✅", confirmQ:"Ready to see your personalized picks?",
+    confirmBtn:"✨ Get My Recommendations", confirmU:"Yes, show me! ✨", recommendU:"Yes, let's go!",
+    analyzing:"Crunching the numbers... 🔍",
     analyzingLabel:"Finding the best products for your pet",
-    done:(n,r)=>`<div class="done-banner">Analysis Complete! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}Check out the perfect Hill's products for ${n} below.`,
-    timeout:"Response timed out. 🔄 Please try again.",
-    error:"A temporary error occurred. Please try again shortly.",
+    done:(n,r)=>`<div class="done-banner">Your Results Are In! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}Here are the top Hill's picks tailored for ${n}.`,
+    timeout:"That took too long. 🔄 Let's try again!",
+    error:"Oops, something went wrong. Let's try that again!",
     retry:"Try again", petName:"your pet",
     rxBadge:"Rx", flavorSfx:"", viewHills:"View on Hill's Official Site →",
     browseMore:"Explore more Hill's products",
@@ -137,17 +137,17 @@ const T = {
     bestUrl:"https://www.hillspet.com/dog-food",
     newUrl:"https://www.hillspet.com/cat-food",
     storeUrl:"https://www.hillspet.com",
-    saveQ:"Would you like to save your results?",
-    saveSub:"Sign up to access your recommendations anytime.",
+    saveQ:"Want to save your results?",
+    saveSub:"Create an account to revisit your recommendations anytime.",
     kakao:"💬 Quick Sign Up", kakaoAlert:"Sign-up is coming soon!", skipSave:"Maybe later",
     restartLink:"↩ Start over",
-    notRelevant:"Hello! I'm the **Hill's Pet Planner**, your personalized food recommendation bot. 🐾\n\nI can help with:\n• **Personalized food recommendations** for health concerns\n• **Nutritional advice** for dogs and cats\n• Hill's product information\n\nFeel free to ask me anything about your pet!",
-    noInfoSfx:"\n\nFeel free to ask any questions!\nYou can also press the **Get Recommendation** button below to start.",
-    parsed:"Here's what I've gathered.", parsedSfx:"\n\nShall we start the recommendation?",
-    parseErr:"I understand! Please share a few more details for an accurate recommendation.",
-    defSympathy:"I've noted your message.",
-    defGreeting:"Hello! Thanks for visiting for pet nutrition advice 😊",
-    emergency:"🚨 **This sounds like an emergency!**\n\nThe symptoms you've described may require immediate veterinary attention.\n\n🏥 **Please contact your nearest animal hospital right away.**\n📞 For after-hours emergencies, search for a 24-hour vet clinic in your area.\n\nOnce your pet is stable, I'm here to help with nutrition advice.",
+    notRelevant:"Hey there! I'm the **Hill's Pet Planner**, your personalized food recommendation bot. 🐾\n\nI can help with:\n• **Personalized food picks** based on health needs\n• **Nutrition advice** for dogs and cats\n• Hill's product info\n\nTell me about your pet and I'll find the best match!",
+    noInfoSfx:"\n\nFeel free to ask anything!\nOr tap the **Get Recommendation** button below to get started.",
+    parsed:"Here's what I know so far:", parsedSfx:"\n\nReady to find the best match?",
+    parseErr:"Got it! A few more details and I'll nail the recommendation.",
+    defSympathy:"Thanks for sharing that.",
+    defGreeting:"Hey there! Thanks for stopping by for pet nutrition advice 😊",
+    emergency:"🚨 **This sounds like an emergency!**\n\nThe symptoms you've described may need immediate vet attention.\n\n🏥 **Please contact your nearest animal hospital right away.**\n📞 For after-hours emergencies, search for a 24-hour vet clinic in your area.\n\nOnce your pet is stable, I'm here to help with nutrition advice.",
     emergencyContinue:"It's not urgent → Continue with food recommendation",
   },
 };
@@ -682,7 +682,7 @@ export default function App() {
         const res = await fetchWithTimeout("/api/classify-concerns",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({text:freeText.trim(), pet_type:data.petType})
+          body:JSON.stringify({text:freeText.trim(), pet_type:data.petType, lang})
         });
         const d2 = await res.json();
         classifiedFromText = (d2.concerns||[]).filter(c => !finalConcerns.includes(c));
@@ -1057,7 +1057,7 @@ export default function App() {
           <div className="card-img-row">
             <div className="card-img-box">
               {product.image_url ? (
-                <img src={product.image_url} alt={product.product_name_kr} className="card-product-img"
+                <img src={product.image_url} alt={(lang==="en" && product.product_name_en) ? product.product_name_en : product.product_name_kr} className="card-product-img"
                   onError={e=>{e.target.style.display='none'; e.target.nextSibling.style.display='flex';}} />
               ) : null}
               <span className="card-img-fallback" style={product.image_url?{display:'none'}:undefined}>
@@ -1065,25 +1065,29 @@ export default function App() {
               </span>
             </div>
             <div className="card-info">
-              <div className="card-name">{product.product_name_kr}</div>
-              <div className="card-brand">{product.brand}</div>
+              <div className="card-name">{(lang==="en" && product.product_name_en) ? product.product_name_en : product.product_name_kr}</div>
+              {product.brand === "사이언스 다이어트"
+                ? <span className="brand-badge brand-sd">{lang==="en"?"SCIENCE DIET":"사이언스 다이어트"}</span>
+                : product.brand === "프리스크립션 다이어트"
+                ? <span className="brand-badge brand-pd">{lang==="en"?"PRESCRIPTION DIET":"프리스크립션 다이어트"}</span>
+                : <div className="card-brand">{product.brand}</div>}
             </div>
           </div>
           <div className="card-meta">
             {product.food_form && <span className="meta-item">{product.food_form}</span>}
             {product.flavor && <span className="meta-item">{product.flavor}{t.flavorSfx}</span>}
-            {product.is_activbiome && <span className="meta-item activbiome">액티브바이옴+</span>}
+            {product.is_activbiome && <span className="meta-item activbiome">{lang==="en"?"ActivBiome+":"액티브바이옴+"}</span>}
             {product.product_line && <span className="meta-item">{product.product_line}</span>}
           </div>
           {(product.health_benefits||[]).length>0 && (
             <div className="card-tags">
-              {product.health_benefits.slice(0,4).map(t=><span key={t} className="tag">{t}</span>)}
+              {product.health_benefits.slice(0,4).map(b=><span key={b} className="tag">{lang==="en"?(CONCERN_EN[b]||b):b}</span>)}
             </div>
           )}
           {product.description && <div className="card-desc">{product.description}</div>}
           {product.reasoning && <div className="card-reason">{product.reasoning}</div>}
           {product.product_url && (
-            <a href={lang==="en"?product.product_url.replace("www.hillspet.co.kr","www.hillspet.com"):product.product_url} target="_blank" rel="noreferrer" className="card-link">
+            <a href={product.product_url} target="_blank" rel="noreferrer" className="card-link">
               {t.viewHills}
             </a>
           )}
