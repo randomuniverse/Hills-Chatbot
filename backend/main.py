@@ -35,6 +35,21 @@ CONCERN_EN = {
     "암 환자 지원":"Cancer Support","응급 관리":"Critical Care",
 }
 
+# Korean → English food form mapping
+FOOD_FORM_EN = {
+    "건식":"Dry","습식":"Wet","캔":"Canned","파우치":"Pouch",
+    "트레이":"Tray","스튜":"Stew","간식":"Treat",
+}
+
+# Korean → English flavor mapping
+FLAVOR_EN = {
+    "치킨":"Chicken","닭고기":"Chicken","연어":"Salmon","참치":"Tuna",
+    "소고기":"Beef","양고기":"Lamb","오리":"Duck","칠면조":"Turkey",
+    "돼지고기":"Pork","생선":"Fish","바다생선":"Ocean Fish",
+    "치킨&야채":"Chicken & Vegetables","연어&야채":"Salmon & Vegetables",
+    "치킨&보리":"Chicken & Barley","오리&감자":"Duck & Potato",
+}
+
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 app = FastAPI()
@@ -556,11 +571,11 @@ Hills 제품 후보:
             "is_prescription": p.get("is_prescription",False),
             "product_url": _url_to_en(p.get("product_url","")) if is_en else p.get("product_url",""),
             "image_url": _product_images.get(p.get("product_url",""), ""),
-            "food_form": p.get("food_form",""),
-            "flavor": p.get("flavor",""),
+            "food_form": FOOD_FORM_EN.get(p.get("food_form",""), p.get("food_form","")) if is_en else p.get("food_form",""),
+            "flavor": FLAVOR_EN.get(p.get("flavor",""), p.get("flavor","")) if is_en else p.get("flavor",""),
             "is_activbiome": p.get("is_activbiome",False),
             "product_line": p.get("product_line",""),
-            "description": p.get("description",""),
+            "description": "" if is_en else p.get("description",""),
             "reasoning": reasons[i] if i<len(reasons) else "",
         } for i,p in enumerate(selected)],
         "overall_reasoning": ai.get("overall_reasoning",""),
