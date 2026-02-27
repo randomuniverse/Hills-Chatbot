@@ -1066,11 +1066,11 @@ export default function App() {
             </div>
             <div className="card-info">
               <div className="card-name">{(lang==="en" && product.product_name_en) ? product.product_name_en : product.product_name_kr}</div>
-              <div className="card-brand">
-                {product.brand === "사이언스 다이어트"
-                  ? <img src="/SD.png" alt="Science Diet" className="brand-logo" />
-                  : product.brand}
-              </div>
+              {product.brand === "사이언스 다이어트"
+                ? <span className="brand-badge brand-sd">{lang==="en"?"SCIENCE DIET":"사이언스 다이어트"}</span>
+                : product.brand === "프리스크립션 다이어트"
+                ? <span className="brand-badge brand-pd">{lang==="en"?"PRESCRIPTION DIET":"프리스크립션 다이어트"}</span>
+                : <div className="card-brand">{product.brand}</div>}
             </div>
           </div>
           <div className="card-meta">
