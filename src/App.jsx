@@ -1057,7 +1057,7 @@ export default function App() {
           <div className="card-img-row">
             <div className="card-img-box">
               {product.image_url ? (
-                <img src={product.image_url} alt={product.product_name_kr} className="card-product-img"
+                <img src={product.image_url} alt={(lang==="en" && product.product_name_en) ? product.product_name_en : product.product_name_kr} className="card-product-img"
                   onError={e=>{e.target.style.display='none'; e.target.nextSibling.style.display='flex';}} />
               ) : null}
               <span className="card-img-fallback" style={product.image_url?{display:'none'}:undefined}>
@@ -1065,7 +1065,7 @@ export default function App() {
               </span>
             </div>
             <div className="card-info">
-              <div className="card-name">{product.product_name_kr}</div>
+              <div className="card-name">{(lang==="en" && product.product_name_en) ? product.product_name_en : product.product_name_kr}</div>
               <div className="card-brand">{product.brand}</div>
             </div>
           </div>
@@ -1077,13 +1077,13 @@ export default function App() {
           </div>
           {(product.health_benefits||[]).length>0 && (
             <div className="card-tags">
-              {product.health_benefits.slice(0,4).map(t=><span key={t} className="tag">{t}</span>)}
+              {product.health_benefits.slice(0,4).map(b=><span key={b} className="tag">{lang==="en"?(CONCERN_EN[b]||b):b}</span>)}
             </div>
           )}
           {product.description && <div className="card-desc">{product.description}</div>}
           {product.reasoning && <div className="card-reason">{product.reasoning}</div>}
           {product.product_url && (
-            <a href={lang==="en"?product.product_url.replace("www.hillspet.co.kr","www.hillspet.com"):product.product_url} target="_blank" rel="noreferrer" className="card-link">
+            <a href={product.product_url} target="_blank" rel="noreferrer" className="card-link">
               {t.viewHills}
             </a>
           )}

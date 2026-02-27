@@ -43,6 +43,21 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
 claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], timeout=30.0)
 
+def _slug_to_product_name(url: str) -> str:
+    """Extract English product name from Hills URL slug.
+    e.g. '.../science-diet-puppy-large-breed-dry' → 'Science Diet Puppy Large Breed Dry'
+    """
+    if not url:
+        return ""
+    slug = url.rstrip("/").rsplit("/", 1)[-1]
+    return slug.replace("-", " ").title()
+
+def _url_to_en(url: str) -> str:
+    """Convert hillspet.co.kr URL to hillspet.com for English mode."""
+    if not url:
+        return url
+    return url.replace("www.hillspet.co.kr", "www.hillspet.com")
+
 _db_categories = {"dog": [], "cat": [], "last_refresh": 0}
 CATEGORY_REFRESH_INTERVAL = 300
 
@@ -430,7 +445,7 @@ async def recommend(req: RecommendRequest):
 
     if is_en:
         summary = "\n".join([
-            f"[{i+1}] {p['product_name_kr']} ({p.get('brand','')}) "
+            f"[{i+1}] {_slug_to_product_name(p.get('product_url',''))} ({p.get('brand','')}) "
             f"| Benefits: {', '.join(CONCERN_EN.get(b, b) for b in (p.get('health_benefits') or []))} "
             f"| Form: {p.get('food_form','')}"
             f"{' | Flavor: '+p['flavor'] if p.get('flavor') else ''}"
@@ -535,10 +550,11 @@ Hills 제품 후보:
         "products": [{
             "id": str(p["id"]),
             "product_name_kr": p["product_name_kr"],
+            "product_name_en": _slug_to_product_name(p.get("product_url","")) if is_en else "",
             "brand": p.get("brand",""),
             "health_benefits": p.get("health_benefits") or [],
             "is_prescription": p.get("is_prescription",False),
-            "product_url": p.get("product_url",""),
+            "product_url": _url_to_en(p.get("product_url","")) if is_en else p.get("product_url",""),
             "image_url": _product_images.get(p.get("product_url",""), ""),
             "food_form": p.get("food_form",""),
             "flavor": p.get("flavor",""),
