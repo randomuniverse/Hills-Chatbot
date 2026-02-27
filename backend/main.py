@@ -58,6 +58,19 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_ANON_KEY"])
 claude   = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], timeout=30.0)
 
+def _translate_food_form(val: str) -> str:
+    """Translate food_form like '습식(스튜)' → 'Wet (Stew)' using partial matching."""
+    if not val:
+        return val
+    if val in FOOD_FORM_EN:
+        return FOOD_FORM_EN[val]
+    # Partial match: translate each Korean token found in the value
+    result = val
+    for ko, en in FOOD_FORM_EN.items():
+        if ko in result:
+            result = result.replace(ko, en)
+    return result
+
 def _slug_to_product_name(url: str) -> str:
     """Extract English product name from Hills URL slug.
     e.g. '.../science-diet-puppy-large-breed-dry' → 'Science Diet Puppy Large Breed Dry'
@@ -586,7 +599,7 @@ Hills 제품 후보:
             "is_prescription": p.get("is_prescription",False),
             "product_url": _url_to_en(p.get("product_url","")) if is_en else p.get("product_url",""),
             "image_url": _product_images.get(p.get("product_url",""), ""),
-            "food_form": FOOD_FORM_EN.get(p.get("food_form",""), p.get("food_form","")) if is_en else p.get("food_form",""),
+            "food_form": _translate_food_form(p.get("food_form","")) if is_en else p.get("food_form",""),
             "flavor": FLAVOR_EN.get(p.get("flavor",""), p.get("flavor","")) if is_en else p.get("flavor",""),
             "is_activbiome": p.get("is_activbiome",False),
             "product_line": p.get("product_line",""),
