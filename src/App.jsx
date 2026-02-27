@@ -1066,7 +1066,11 @@ export default function App() {
             </div>
             <div className="card-info">
               <div className="card-name">{(lang==="en" && product.product_name_en) ? product.product_name_en : product.product_name_kr}</div>
-              <div className="card-brand">{product.brand}</div>
+              <div className="card-brand">
+                {product.brand === "사이언스 다이어트"
+                  ? <img src="/SD.png" alt="Science Diet" className="brand-logo" />
+                  : product.brand}
+              </div>
             </div>
           </div>
           <div className="card-meta">
