@@ -88,6 +88,8 @@ const T = {
     parseErr:"말씀 잘 들었어요! 몇 가지 정보를 더 알려주시면 정확하게 추천해드릴게요.",
     defSympathy:"말씀해주신 내용을 확인했어요.",
     defGreeting:"안녕하세요! 반려동물 영양 상담을 위해 찾아주셔서 감사합니다 😊",
+    emergency:"🚨 **응급 상황이 의심됩니다!**\n\n말씀하신 증상은 즉시 수의사의 진료가 필요할 수 있어요.\n\n🏥 **가까운 동물병원에 바로 연락해주세요.**\n📞 야간/응급: 해당 지역 24시간 동물병원 검색\n\n증상이 안정된 후에 맞춤 영양 상담을 도와드릴게요.",
+    emergencyContinue:"증상이 급하지 않아요 → 사료 추천 계속하기",
   },
   en: {
     headerSub:"AI Pet Nutrition Advisor",
@@ -145,6 +147,8 @@ const T = {
     parseErr:"I understand! Please share a few more details for an accurate recommendation.",
     defSympathy:"I've noted your message.",
     defGreeting:"Hello! Thanks for visiting for pet nutrition advice 😊",
+    emergency:"🚨 **This sounds like an emergency!**\n\nThe symptoms you've described may require immediate veterinary attention.\n\n🏥 **Please contact your nearest animal hospital right away.**\n📞 For after-hours emergencies, search for a 24-hour vet clinic in your area.\n\nOnce your pet is stable, I'm here to help with nutrition advice.",
+    emergencyContinue:"It's not urgent → Continue with food recommendation",
   },
 };
 
@@ -211,6 +215,15 @@ function getConcernHint(sel, data, lang) {
                 : "여러 고민을 함께 고려해서 최적의 조합을 찾아볼게요.";
 
   return null;
+}
+
+/* ── Emergency detection ── */
+const EMERGENCY_KO = /피를?\s*토|피토|혈변|혈뇨|경련|발작|의식.{0,3}(잃|없)|쓰러|호흡.{0,3}(곤란|멈|안\s*해)|중독|독극물|농약|초콜릿.{0,3}먹|자일리톨|포도.{0,3}먹|양파.{0,3}먹|골절|뼈.{0,3}부러|교통사고|차에\s*치|열사병|체온.{0,4}(40|41|42)|심폐소생|응급|죽을|죽어가/i;
+const EMERGENCY_EN = /vomit(?:ing)?\s*blood|blood\s*in\s*(?:stool|urine|vomit)|seizur|convuls|unconscious|collaps|can'?t\s*breathe|not\s*breathing|difficulty\s*breathing|poison|toxic|chocolate\s*(?:ate|eat|ingest)|xylitol|grape\s*(?:ate|eat)|onion\s*(?:ate|eat)|fracture|broken\s*bone|hit\s*by\s*(?:a\s*)?car|heatstroke|heat\s*stroke|CPR|emergency|dying|choking/i;
+
+function detectEmergency(text, lang) {
+  const pattern = lang === "en" ? EMERGENCY_EN : EMERGENCY_KO;
+  return pattern.test(text);
 }
 
 /* ── HTML sanitization helper ── */
@@ -390,7 +403,19 @@ export default function App() {
 
     if (handleContextInput(txt)) return;
 
-    if (step !== "START") return;
+    if (step !== "START" && step !== "EMERGENCY") return;
+
+    /* ── Emergency detection ── */
+    if (step === "START" && detectEmergency(txt, lang)) {
+      setStep("EMERGENCY");
+      addBot(t.emergency, "EMERGENCY");
+      return;
+    }
+    /* If user says "continue" from EMERGENCY, proceed to START flow */
+    if (step === "EMERGENCY") {
+      setStep("START");
+      /* fall through to normal START parsing */
+    }
 
     setStep("PARSING");
 
@@ -703,6 +728,15 @@ export default function App() {
     const hasNotes = finalNotes.length > 0;
     addUser(hasNotes ? finalNotes : t.spNoneUser);
 
+    /* ── Emergency check in special notes ── */
+    if (hasNotes && detectEmergency(finalNotes, lang)) {
+      const safeFinalNotes = escapeHtml(finalNotes);
+      const emergencyNote = lang === "en"
+        ? `🚨 **Emergency symptoms detected** in your notes: "${safeFinalNotes}"\n\nPlease consult a veterinarian first. I'll still proceed with the recommendation, but **please prioritize a vet visit.**`
+        : `🚨 **응급 증상이 감지되었어요**: "${safeFinalNotes}"\n\n수의사 상담을 먼저 받으시길 권합니다. 추천은 계속 진행하지만, **병원 방문을 우선해주세요.**`;
+      setMessages(p=>[...p,{role:"bot",text:emergencyNote}]);
+    }
+
     const updatedData = { ...dataRef.current, specialNotes: hasNotes ? finalNotes : "" };
     setData(p => ({ ...p, specialNotes: hasNotes ? finalNotes : "" }));
     dataRef.current = updatedData;
@@ -859,6 +893,16 @@ export default function App() {
 
   function renderButtons() {
     if (step==="START") return null;
+
+    if (step==="EMERGENCY") return (
+      <div className="btn-row">
+        <button className="choice-btn ghost" onClick={()=>{
+          addUser(t.emergencyContinue);
+          setStep("START");
+          addBot(t.startBot, "AUTH_PROMPT", 400);
+        }}>{t.emergencyContinue}</button>
+      </div>
+    );
 
     if (step==="CONFIRM_PARSE") return (
       <div className="btn-row">
