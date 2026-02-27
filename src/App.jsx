@@ -166,6 +166,53 @@ function getFilteredSpecialOpts(opts, ageCategory) {
   return opts.filter(o => !PUPPY_HIDDEN_SPECIAL.has(o));
 }
 
+/* ── D: Smart hints for concern combinations ── */
+function getConcernHint(sel, data, lang) {
+  if (!sel.length) return null;
+  const s = new Set(sel);
+  const isEn = lang === "en";
+
+  /* combination hints */
+  if (s.has("관절 관리") && s.has("체중 관리"))
+    return isEn ? "Joint and weight issues are closely related — great combo to address together!"
+                : "관절과 체중은 서로 밀접한 관계예요. 함께 관리하면 효과적이에요!";
+  if (s.has("소화기 관리") && s.has("식이 민감성"))
+    return isEn ? "Digestive issues and food sensitivity often go hand in hand. We'll find the gentlest option."
+                : "소화기 문제와 식이 민감성은 함께 나타나는 경우가 많아요. 가장 순한 제품을 찾아볼게요.";
+  if (s.has("피부 건강") && s.has("식이 민감성"))
+    return isEn ? "Skin problems are often linked to food sensitivity — nutrition can make a big difference!"
+                : "피부 문제는 식이 민감성과 연관이 깊어요. 사료 변경으로 크게 개선될 수 있어요!";
+  if (s.has("체중 관리") && s.has("소화기 관리"))
+    return isEn ? "We'll look for a formula that supports digestion while managing calories."
+                : "소화 건강을 지키면서 칼로리도 관리할 수 있는 제품을 찾아볼게요.";
+
+  /* single-concern hints */
+  if (s.size === 1) {
+    if (s.has("소화기 관리"))
+      return isEn ? "Digestive issues often improve significantly with the right diet."
+                  : "소화기 문제는 사료 변경만으로도 크게 좋아지는 경우가 많아요.";
+    if (s.has("체중 관리"))
+      return isEn ? "Proper nutrition is the most effective way to manage weight."
+                  : "적절한 영양 관리가 체중 조절의 가장 효과적인 방법이에요.";
+    if (s.has("관절 관리") && data.sizeClass === "large")
+      return isEn ? "Joint care is especially important for large breeds — good call!"
+                  : "대형견에게 관절 관리는 특히 중요해요. 좋은 선택이에요!";
+    if (s.has("피부 건강"))
+      return isEn ? "Many skin issues can be improved through targeted nutrition."
+                  : "많은 피부 문제가 맞춤 영양으로 개선될 수 있어요.";
+    if (s.has("요로계 관리"))
+      return isEn ? "Urinary health is heavily influenced by diet — we have great options for this."
+                  : "요로계 건강은 식이에 큰 영향을 받아요. 좋은 제품이 많답니다.";
+  }
+
+  /* 3+ concerns */
+  if (sel.length >= 3)
+    return isEn ? "Multiple concerns noted — I'll find products that cover as many as possible."
+                : "여러 고민을 함께 고려해서 최적의 조합을 찾아볼게요.";
+
+  return null;
+}
+
 function buildSummary(d, lang) {
   const t = T[lang];
   const age = t.ages[d.ageCategory]||"";
@@ -859,6 +906,7 @@ export default function App() {
     if (step==="CONCERNS") {
       const rawList = data.petType==="dog"?dbConcerns.dog:dbConcerns.cat;
       const list = getFilteredConcerns(rawList, data.petType, data.ageCategory);
+      const hint = getConcernHint(selected, data, lang);
       return (
         <div className="concerns-wrap">
           <div className="btn-grid-3">
@@ -868,6 +916,7 @@ export default function App() {
                 onClick={()=>toggleConcern(c)}>{cd(c)}</button>
             ))}
           </div>
+          {hint && <div className="concern-hint">💡 {hint}</div>}
           <button className="next-btn" onClick={handleConcernsDone}>
             {selected.length>0 ? t.next : t.noConcern}
           </button>

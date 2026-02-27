@@ -611,6 +611,17 @@ body {
   font-size: 12px; cursor: pointer; padding: 4px 0; text-align: center;
 }
 .back-to-btns:hover { color: var(--blue); }
+.concern-hint {
+  font-size: 12.5px; color: var(--blue);
+  background: rgba(27,94,166,0.07);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px; line-height: 1.5;
+  animation: hintFade 0.3s ease-out;
+}
+@keyframes hintFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .next-btn {
   background: var(--blue); color: var(--white);
   border: none; padding: 13px;
