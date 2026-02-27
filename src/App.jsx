@@ -682,7 +682,7 @@ export default function App() {
         const res = await fetchWithTimeout("/api/classify-concerns",{
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({text:freeText.trim(), pet_type:data.petType})
+          body:JSON.stringify({text:freeText.trim(), pet_type:data.petType, lang})
         });
         const d2 = await res.json();
         classifiedFromText = (d2.concerns||[]).filter(c => !finalConcerns.includes(c));
@@ -1072,7 +1072,7 @@ export default function App() {
           <div className="card-meta">
             {product.food_form && <span className="meta-item">{product.food_form}</span>}
             {product.flavor && <span className="meta-item">{product.flavor}{t.flavorSfx}</span>}
-            {product.is_activbiome && <span className="meta-item activbiome">액티브바이옴+</span>}
+            {product.is_activbiome && <span className="meta-item activbiome">{lang==="en"?"ActivBiome+":"액티브바이옴+"}</span>}
             {product.product_line && <span className="meta-item">{product.product_line}</span>}
           </div>
           {(product.health_benefits||[]).length>0 && (
