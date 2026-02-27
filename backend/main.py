@@ -405,11 +405,12 @@ Hills product candidates:
 {summary}
 
 **Important**: If multiple health concerns exist, include products covering different concerns. Don't focus on just one.
+**Personalization**: Always mention the pet's breed name ({req.breed or "your pet"}) in overall_reasoning and individual_reasons. Write as if speaking directly to the owner about THEIR specific pet.
 **Select exactly 2-3 products** and respond ONLY in JSON (never select just 1):
 {{
   "selected_indices": [1, 2],
-  "overall_reasoning": "Overall recommendation reason in English, under 150 chars. Reflect special notes.",
-  "individual_reasons": ["Reason for product 1 in English", "Reason for product 2 in English"],
+  "overall_reasoning": "Overall recommendation reason in English, under 150 chars. Mention breed name. Reflect special notes.",
+  "individual_reasons": ["Reason for product 1 mentioning breed name", "Reason for product 2 mentioning breed name"],
   "prescription_note": "Note if prescription diet included or vet consultation needed, or null",
   "special_warning": "Warning about pregnancy/nursing/medication special notes, or null"
 }}"""
@@ -428,11 +429,12 @@ Hills 제품 후보:
 기피 맛 제품만 있고 대안이 없으면, 기피 맛이라도 포함하되 individual_reasons에 맛 관련 안내를 추가하세요.
 
 **중요**: 건강고민이 여러 개일 경우, 각 고민을 커버하는 제품을 골고루 포함하세요. 특정 고민만 집중하지 마세요.
+**개인화**: overall_reasoning과 individual_reasons에 반드시 품종명({req.breed or "반려동물"})을 언급하세요. 보호자에게 직접 이야기하듯, 해당 반려동물만을 위한 맞춤 설명으로 작성하세요.
 **반드시 2~3개** 선택 후 JSON으로만 응답 (1개만 선택하지 마세요):
 {{
   "selected_indices": [1, 2],
-  "overall_reasoning": "전체 추천 이유 150자 이내 한국어. 특이사항·맛선호 반영.",
-  "individual_reasons": ["제품1 이유", "제품2 이유"],
+  "overall_reasoning": "전체 추천 이유 150자 이내 한국어. 품종명 언급. 특이사항·맛선호 반영.",
+  "individual_reasons": ["품종명 언급한 제품1 이유", "품종명 언급한 제품2 이유"],
   "prescription_note": "처방식 포함 또는 수의사 상담 필요 시 안내 문구, 없으면 null",
   "special_warning": "임신/수유/약복용 등 특이사항 관련 주의사항, 없으면 null"
 }}"""
