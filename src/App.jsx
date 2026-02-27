@@ -17,7 +17,7 @@ const BREED_EN = {
   "포메라니안":"Pomeranian","치와와":"Chihuahua","비숑프리제":"Bichon Frise",
   "요크셔테리어":"Yorkie","닥스훈트":"Dachshund","웰시코기":"Corgi",
   "비글":"Beagle","골든리트리버":"Golden Retriever","래브라도":"Labrador",
-  "보더콜리":"Border Collie","허스키":"Husky","진돗개":"Jindo","삽살개":"Sapsali","기타":"Other",
+  "보더콜리":"Border Collie","허스키":"Husky","진돗개":"Jindo","진도개":"Jindo","삽살개":"Sapsali","기타":"Other",
   "믹스묘":"Mixed","코리안숏헤어":"Korean Shorthair","페르시안":"Persian",
   "메인쿤":"Maine Coon","브리티시숏헤어":"British Shorthair","스코티시폴드":"Scottish Fold",
   "러시안블루":"Russian Blue","시암":"Siamese","랙돌":"Ragdoll","아비시니안":"Abyssinian",
@@ -808,16 +808,16 @@ export default function App() {
     const concerns = (d.healthConcerns||[]).filter(c=>c!=="없음").map(c=> lang==="en"?(CONCERN_EN[c]||c):c);
 
     if (lang === "en") {
-      const steps = [`Searching ${size} ${age} product database...`];
-      if (concerns.length) steps.push(`Analyzing ${concerns.join(" + ")} combination...`);
-      if (breed) steps.push(`Calculating optimal nutrition for ${breed}...`);
-      steps.push("Selecting best matches...");
+      const steps = [`📦 Scanning 120+ Hill's formulas for ${size} ${age} pets...`];
+      if (concerns.length) steps.push(`🔬 Evaluating ${concerns.join(" + ")} nutrition profiles...`);
+      if (breed) steps.push(`🧬 Optimizing for ${breed}-specific needs...`);
+      steps.push("🏆 Ranking top matches by fit score...");
       return steps;
     }
-    const steps = [`${size ? size + " " : ""}${age} 제품 데이터베이스 검색 중...`];
-    if (concerns.length) steps.push(`${concerns.join(" + ")} 조합 분석 중...`);
-    if (breed) steps.push(`${breed}에게 최적화된 영양 밸런스 계산 중...`);
-    steps.push("최적의 제품 선별 중...");
+    const steps = [`📦 ${size ? size+" " : ""}${age} Hill's 제품 120여 종 검색 중...`];
+    if (concerns.length) steps.push(`🔬 ${concerns.join(" + ")} 영양 프로필 분석 중...`);
+    if (breed) steps.push(`🧬 ${breed} 맞춤 영양 밸런스 최적화 중...`);
+    steps.push("🏆 적합도 기준으로 최적 제품 선별 중...");
     return steps;
   }
 
@@ -1046,7 +1046,9 @@ export default function App() {
   }
 
   function ProductCard({product, index}) {
-    const ranks=["BEST MATCH","RECOMMENDED","ALSO GREAT"];
+    const ranks = lang==="en"
+      ? ["🏆 TOP PICK","⭐ GREAT FIT","✅ SOLID CHOICE"]
+      : ["🏆 최적 추천","⭐ 추천","✅ 추천"];
     return (
       <div className="product-card">
         <div className="card-top">

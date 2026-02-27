@@ -19,7 +19,7 @@ BREED_EN = {
     "포메라니안":"Pomeranian","치와와":"Chihuahua","비숑프리제":"Bichon Frise",
     "요크셔테리어":"Yorkie","닥스훈트":"Dachshund","웰시코기":"Corgi",
     "비글":"Beagle","골든리트리버":"Golden Retriever","래브라도":"Labrador",
-    "보더콜리":"Border Collie","허스키":"Husky","진돗개":"Jindo","삽살개":"Sapsali","기타":"Other",
+    "보더콜리":"Border Collie","허스키":"Husky","진돗개":"Jindo","진도개":"Jindo","삽살개":"Sapsali","기타":"Other",
     "믹스묘":"Mixed","코리안숏헤어":"Korean Shorthair","페르시안":"Persian",
     "메인쿤":"Maine Coon","브리티시숏헤어":"British Shorthair","스코티시폴드":"Scottish Fold",
     "러시안블루":"Russian Blue","시암":"Siamese","랙돌":"Ragdoll","아비시니안":"Abyssinian",
@@ -166,7 +166,7 @@ def _build_intent_prompt(text, is_en):
             "{\n"
             '  "is_relevant": true or false,\n'
             '  "pet_type": "dog" or "cat" or null,\n'
-            '  "breed": "breed name in KOREAN" or null (e.g., "진도개", "말티즈", "페르시안"),\n'
+            '  "breed": "breed name in KOREAN" or null (e.g., "진돗개", "말티즈", "페르시안"),\n'
             '  "age_category": "puppy"(<1yr) or "adult"(1-7yr) or "senior7"(7-11yr) or "senior11"(11+yr) or null,\n'
             f'  "concerns": [use ONLY these exact Korean strings: {dog_concerns}, {cat_concerns}],\n'
             '  "sympathy_msg": "A warm empathetic English message, 1-2 sentences. Include brief summary of the issue.",\n'
@@ -185,7 +185,7 @@ def _build_intent_prompt(text, is_en):
         "{\n"
         '  "is_relevant": true 또는 false (반려동물/사료/건강 관련 여부),\n'
         '  "pet_type": "dog" 또는 "cat" 또는 null,\n'
-        '  "breed": "품종명(한글)" 또는 null (예: "진도개", "말티즈", "페르시안" 등),\n'
+        '  "breed": "품종명(한글)" 또는 null (예: "진돗개", "말티즈", "페르시안" 등),\n'
         '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
         '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
         '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
