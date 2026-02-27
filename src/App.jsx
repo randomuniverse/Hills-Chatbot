@@ -195,6 +195,8 @@ export default function App() {
   const [selectedSpecial, setSelectedSpecial] = useState([]);
   const [showSpecialInput, setShowSpecialInput] = useState(false);
   const [dbConcerns, setDbConcerns] = useState({dog: FALLBACK_DOG, cat: FALLBACK_CAT});
+  const [loadingLabel, setLoadingLabel] = useState("");
+  const loadingTimer = useRef(null);
   const bottomRef = useRef(null);
   const dataRef = useRef(data);
   const audioCtxRef = useRef(null);
@@ -549,6 +551,7 @@ export default function App() {
     setStep("_PROCESSING");
 
     let finalConcerns = [...selected];
+    let classifiedFromText = [];
 
     if (freeText.trim()) {
       try {
@@ -558,6 +561,7 @@ export default function App() {
           body:JSON.stringify({text:freeText.trim(), pet_type:data.petType})
         });
         const d2 = await res.json();
+        classifiedFromText = (d2.concerns||[]).filter(c => !finalConcerns.includes(c));
         finalConcerns = [...new Set([...finalConcerns,...(d2.concerns||[])])];
       } catch {}
     }
@@ -574,7 +578,16 @@ export default function App() {
     dataRef.current = {...dataRef.current, healthConcerns:finalConcerns};
     setSelected([]); setFreeText("");
 
-    addBot(t.specialQ, "SPECIAL");
+    /* ── E: Show AI understanding of free text ── */
+    if (freeText.trim() && classifiedFromText.length > 0) {
+      const classified = classifiedFromText.map(c=>cd(c)).join(", ");
+      const ackMsg = lang === "en"
+        ? `Got it! ✅ I've identified: **${classified}** from your description. I'll factor this into the recommendation.`
+        : `이해했어요! ✅ 말씀하신 내용에서 **${classified}**을(를) 파악했어요. 추천에 반영할게요.`;
+      addBot(ackMsg + "\n\n" + t.specialQ, "SPECIAL");
+    } else {
+      addBot(t.specialQ, "SPECIAL");
+    }
   }
 
   function toggleSpecialOption(opt) {
@@ -653,9 +666,49 @@ export default function App() {
     return { ...d, healthConcerns: concerns, specialNotes: notes };
   }
 
+  function buildLoadingSteps(d, lang) {
+    const breed = lang === "en" ? (BREED_EN[d.breed]||d.breed) : d.breed;
+    const size = lang === "en" ? (T.en.size[d.sizeClass]||"") : (T.ko.size[d.sizeClass]||"");
+    const age = lang === "en" ? (T.en.ages[d.ageCategory]||"") : (T.ko.ages[d.ageCategory]||"");
+    const concerns = (d.healthConcerns||[]).filter(c=>c!=="없음").map(c=> lang==="en"?(CONCERN_EN[c]||c):c);
+
+    if (lang === "en") {
+      const steps = [`Searching ${size} ${age} product database...`];
+      if (concerns.length) steps.push(`Analyzing ${concerns.join(" + ")} combination...`);
+      if (breed) steps.push(`Calculating optimal nutrition for ${breed}...`);
+      steps.push("Selecting best matches...");
+      return steps;
+    }
+    const steps = [`${size ? size + " " : ""}${age} 제품 데이터베이스 검색 중...`];
+    if (concerns.length) steps.push(`${concerns.join(" + ")} 조합 분석 중...`);
+    if (breed) steps.push(`${breed}에게 최적화된 영양 밸런스 계산 중...`);
+    steps.push("최적의 제품 선별 중...");
+    return steps;
+  }
+
+  function startLoadingSteps(d) {
+    const steps = buildLoadingSteps(d, lang);
+    let i = 0;
+    setLoadingLabel(steps[0]);
+    loadingTimer.current = setInterval(() => {
+      i++;
+      if (i < steps.length) {
+        setLoadingLabel(steps[i]);
+      } else {
+        clearInterval(loadingTimer.current);
+      }
+    }, 1800);
+  }
+
+  function stopLoadingSteps() {
+    if (loadingTimer.current) clearInterval(loadingTimer.current);
+    setLoadingLabel("");
+  }
+
   async function handleConfirm() {
     addUser(t.confirmU);
     setStep("LOADING");
+    startLoadingSteps(data);
     addBot(t.analyzing, "LOADING", 400);
 
     try {
@@ -674,6 +727,7 @@ export default function App() {
           lang,
         })
       });
+      stopLoadingSteps();
       const result = await res.json();
       setResults(result);
       setStep("DONE");
@@ -682,6 +736,7 @@ export default function App() {
       addBot(t.done(data.petName||t.petName, reasoning), "DONE", 600);
       setTimeout(() => setShowSave(true), 2000);
     } catch (err) {
+      stopLoadingSteps();
       setStep("DONE");
       const msg = err.name === "AbortError" ? t.timeout : t.error;
       addBot(msg, "DONE", 400);
@@ -932,7 +987,7 @@ export default function App() {
             <div className="loading-icon-wrap">
               <span className="loading-magnifier">🔍</span>
             </div>
-            <div className="loading-label">{t.analyzingLabel}</div>
+            <div className="loading-label">{loadingLabel || t.analyzingLabel}</div>
             <div className="loading-dots-bar"><span/><span/><span/></div>
           </div>
         )}
