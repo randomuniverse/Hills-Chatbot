@@ -497,6 +497,40 @@ export default function App() {
     setTimeout(() => goToNextStep(updated), 400);
   }
 
+  /* ── A: Context-aware transition messages ── */
+  function ageContextMsg(cat, d) {
+    const breed = lang==="en" ? (BREED_EN[d.breed]||d.breed) : d.breed;
+    const size = d.sizeClass;
+    if (lang === "en") {
+      if (cat==="puppy") return size==="large"
+        ? `A ${breed} puppy! 🐾 This is the golden growth period — nutrition is key right now.\n\n${t.pickBody}`
+        : `A ${breed} puppy! 🐾 Let's make sure they get the right start.\n\n${t.pickBody}`;
+      if (cat==="adult") return `${breed} in their prime years! 💪 Let's find the best nutrition to keep them thriving.\n\n${t.pickBody}`;
+      if (cat==="senior7") return `${breed} is entering their senior years. 🤍 Nutrition plays a bigger role now.\n\n${t.pickBody}`;
+      return `A senior ${breed} — they deserve extra special care. 🤍 Let's find the right support.\n\n${t.pickBody}`;
+    }
+    if (cat==="puppy") return size==="large"
+      ? `${breed} 퍼피군요! 🐾 대형견은 지금이 성장의 골든타임이에요. 영양이 정말 중요한 시기예요.\n\n${t.pickBody}`
+      : `${breed} 퍼피군요! 🐾 건강한 시작을 위해 딱 맞는 영양을 찾아볼게요.\n\n${t.pickBody}`;
+    if (cat==="adult") return `한창 활발한 ${breed}이군요! 💪 최적의 컨디션을 유지할 수 있도록 도와드릴게요.\n\n${t.pickBody}`;
+    if (cat==="senior7") return `${breed}가 시니어 시기에 접어들었군요. 🤍 이 시기엔 영양 관리가 더 중요해져요.\n\n${t.pickBody}`;
+    return `고령의 ${breed}이군요. 🤍 더 세심한 케어가 필요한 시기예요. 함께 찾아볼게요.\n\n${t.pickBody}`;
+  }
+
+  function bodyContextMsg(val, d) {
+    const breed = lang==="en" ? (BREED_EN[d.breed]||d.breed) : d.breed;
+    const age = lang==="en" ? (T.en.ages[d.ageCategory]||"") : (T.ko.ages[d.ageCategory]||"");
+    const baseQ = (d.healthConcerns?.length) ? t.editConcerns : t.pickConcerns;
+    if (lang === "en") {
+      if (val==="normal") return `Great, ${breed} is at a healthy weight! 👍 Now let's check for any health concerns.\n\n${baseQ}`;
+      if (val==="overweight") return `Got it — I'll keep weight management in mind for ${breed}. 📋 We'll prioritize this in the recommendation.\n\n${baseQ}`;
+      return `Understood — we'll look for nutrition that helps ${breed} gain healthy weight. 📋\n\n${baseQ}`;
+    }
+    if (val==="normal") return `${breed}, 정상 체형이군요! 👍 건강하게 유지할 수 있도록 도와드릴게요.\n\n${baseQ}`;
+    if (val==="overweight") return `알겠어요! ${breed}의 체중 관리를 우선적으로 고려해서 추천할게요. 📋\n\n${baseQ}`;
+    return `${breed}가 조금 마른 편이군요. 건강한 체중 증가를 위한 영양을 찾아볼게요. 📋\n\n${baseQ}`;
+  }
+
   function handleAge(cat, label) {
     if (step !== "AGE") return;
     playTick();
@@ -511,7 +545,13 @@ export default function App() {
     }
     setData(p=>({...p, ageCategory:cat, healthConcerns: updated.healthConcerns || p.healthConcerns}));
     dataRef.current = updated;
-    setTimeout(() => goToNextStep(updated), 400);
+
+    /* A: contextual age message if breed is known */
+    if (updated.breed) {
+      addBot(ageContextMsg(cat, updated), "BODY");
+    } else {
+      setTimeout(() => goToNextStep(updated), 400);
+    }
   }
 
 
@@ -531,6 +571,13 @@ export default function App() {
     dataRef.current = updated;
     const autoConcerns = updated.healthConcerns || [];
     if (autoConcerns.length) {
+      setSelected(autoConcerns.filter(c => c !== "없음"));
+    }
+
+    /* A: contextual body message if breed is known */
+    if (updated.breed) {
+      addBot(bodyContextMsg(val, updated), "CONCERNS");
+    } else if (autoConcerns.length) {
       setSelected(autoConcerns.filter(c => c !== "없음"));
       addBot(t.editConcerns, "CONCERNS");
     } else {
