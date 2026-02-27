@@ -549,6 +549,12 @@ body {
   transition: opacity 0.2s;
 }
 .save-btn-kakao:hover { opacity: 0.88; }
+.save-btn-kakao.google {
+  background: #fff; color: #3c4043; border: 1.5px solid #dadce0;
+  font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+}
+.save-btn-kakao.google:hover { background: #f7f8f8; border-color: #c6c8ca; }
+.google-g { flex-shrink: 0; }
 .save-btn-skip {
   background: none; border: none;
   color: var(--gray-500); font-size: 12px;
