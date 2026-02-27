@@ -136,7 +136,7 @@ const T = {
     done:(n,r)=>`<div class="done-banner">Your Results Are In! 🎉</div>${r?`<div class="done-reason">${r}</div>`:""}Here are the top Hill's picks tailored for ${n}.`,
     timeout:"That took too long. 🔄 Let's try again!",
     error:"Oops, something went wrong. Let's try that again!",
-    retry:"Try again", petName:"your pet",
+    retry:"Start Over", petName:"your pet",
     rxBadge:"Rx", flavorSfx:"", viewHills:"View on Hill's Official Site →",
     browseMore:"Explore more Hill's products",
     bestP:"Best Sellers", newP:"New Products", storeP:"Hill's on Amazon",
