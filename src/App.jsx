@@ -353,6 +353,63 @@ export default function App() {
       });
     } catch(e) { console.log("audio skip:", e); }
   }
+
+  function playBark() {
+    try {
+      const ctx = getAudioCtx();
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      /* Two quick playful "boof boof" pulses */
+      [0, 0.12].forEach((offset, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(i === 0 ? 420 : 380, now + offset);
+        osc.frequency.exponentialRampToValueAtTime(i === 0 ? 220 : 200, now + offset + 0.08);
+        gain.gain.setValueAtTime(0, now + offset);
+        gain.gain.linearRampToValueAtTime(0.10, now + offset + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.10);
+        /* Soften the square wave with a low-pass filter */
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.value = 800;
+        osc.connect(filter).connect(gain).connect(ctx.destination);
+        osc.start(now + offset);
+        osc.stop(now + offset + 0.12);
+      });
+    } catch {}
+  }
+
+  function playMeow() {
+    try {
+      const ctx = getAudioCtx();
+      if (ctx.state === "suspended") ctx.resume();
+      const now = ctx.currentTime;
+      /* Smooth rising-falling "mew~" with vibrato */
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const vibrato = ctx.createOscillator();
+      const vibratoGain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(600, now);
+      osc.frequency.linearRampToValueAtTime(900, now + 0.12);
+      osc.frequency.linearRampToValueAtTime(500, now + 0.35);
+      /* Gentle vibrato */
+      vibrato.type = "sine";
+      vibrato.frequency.value = 6;
+      vibratoGain.gain.value = 15;
+      vibrato.connect(vibratoGain).connect(osc.frequency);
+      vibrato.start(now);
+      vibrato.stop(now + 0.4);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.10, now + 0.04);
+      gain.gain.setValueAtTime(0.10, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } catch {}
+  }
   useEffect(() => { dataRef.current = data; }, [data]);
 
   useEffect(() => {
@@ -574,7 +631,7 @@ export default function App() {
 
   function handlePetType(type) {
     if (step !== "PET_TYPE") return;
-    playTick();
+    type === "dog" ? playBark() : playMeow();
     setStep("_PROCESSING");
     addUser(type==="dog"?t.dog:t.cat);
     const updated = {...dataRef.current, petType:type};
