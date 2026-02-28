@@ -633,7 +633,7 @@ export default function App() {
 
   function handlePetType(type) {
     if (step !== "PET_TYPE") return;
-    type === "dog" ? playBark() : playMeow();
+    playTick();
     setStep("_PROCESSING");
     addUser(type==="dog"?t.dog:t.cat);
     const updated = {...dataRef.current, petType:type};
@@ -644,7 +644,7 @@ export default function App() {
 
   async function handleBreed(breed) {
     if (step !== "BREED") return;
-    playTick();
+    dataRef.current.petType === "dog" ? playBark() : playMeow();
     addUser(bd(breed));
     setStep("_WAIT");
     const autoSize = BREED_SIZE[breed] || "all";
