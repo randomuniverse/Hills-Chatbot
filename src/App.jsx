@@ -359,23 +359,25 @@ export default function App() {
       const ctx = getAudioCtx();
       if (ctx.state === "suspended") ctx.resume();
       const now = ctx.currentTime;
-      /* Two quick playful "boof boof" pulses */
-      [0, 0.12].forEach((offset, i) => {
+      /* Bright happy "yap yap!" — upward energy, nasal bark tone */
+      [0, 0.13].forEach((offset, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "square";
-        osc.frequency.setValueAtTime(i === 0 ? 420 : 380, now + offset);
-        osc.frequency.exponentialRampToValueAtTime(i === 0 ? 220 : 200, now + offset + 0.08);
+        osc.type = "sawtooth";
+        /* Upward sweep = happy/excited energy */
+        osc.frequency.setValueAtTime(i === 0 ? 480 : 520, now + offset);
+        osc.frequency.linearRampToValueAtTime(i === 0 ? 620 : 680, now + offset + 0.05);
         gain.gain.setValueAtTime(0, now + offset);
-        gain.gain.linearRampToValueAtTime(0.10, now + offset + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.10);
-        /* Soften the square wave with a low-pass filter */
+        gain.gain.linearRampToValueAtTime(0.09, now + offset + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.09);
+        /* Bandpass filter for nasal "bark" quality */
         const filter = ctx.createBiquadFilter();
-        filter.type = "lowpass";
-        filter.frequency.value = 800;
+        filter.type = "bandpass";
+        filter.frequency.value = 700;
+        filter.Q.value = 2;
         osc.connect(filter).connect(gain).connect(ctx.destination);
         osc.start(now + offset);
-        osc.stop(now + offset + 0.12);
+        osc.stop(now + offset + 0.10);
       });
     } catch {}
   }
