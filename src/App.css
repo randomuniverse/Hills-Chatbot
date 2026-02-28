@@ -628,7 +628,7 @@ body {
   background: transparent; border-color: var(--gray-300);
   color: var(--gray-500); box-shadow: none;
 }
-.choice-btn.ghost:hover { border-color: var(--gray-500); color: var(--gray-700); background: transparent; }
+.choice-btn.ghost:hover { border-color: var(--gray-400); color: var(--gray-700); background: var(--white); box-shadow: var(--shadow-xs); }
 .choice-btn.ghost-inline {
   background: transparent; border: 1.5px dashed var(--gray-300);
   color: var(--gray-500); box-shadow: none; grid-column: 1 / -1;
