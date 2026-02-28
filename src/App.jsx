@@ -450,6 +450,23 @@ export default function App() {
         return;
       }
 
+      /* ── Conflict detection: pet_type vs breed mismatch ── */
+      if (parsed.conflict && parsed.conflict.type === "pet_breed_mismatch") {
+        const c = parsed.conflict;
+        /* Store pending data so we can apply the user's choice later */
+        dataRef.current = {...dataRef.current, _pendingConflict: parsed};
+        setIsTyping(true);
+        setTimeout(() => {
+          setIsTyping(false);
+          const sympathyMsg = parsed.sympathy_msg || t.defSympathy;
+          setMessages(p=>[...p,{role:"bot",text:sympathyMsg}]);
+          setTimeout(() => {
+            addBot(c.message, "CONFLICT");
+          }, 800);
+        }, 900);
+        return;
+      }
+
       const newData = { petType: parsed.pet_type, healthConcerns: parsed.concerns||[] };
       if (parsed.age_category) newData.ageCategory = parsed.age_category;
       if (parsed.breed) newData.breed = parsed.breed;
@@ -470,8 +487,15 @@ export default function App() {
 
         setTimeout(() => {
           const chips = [];
-          if (parsed.pet_type) chips.push(parsed.pet_type==="dog"?t.dog:t.cat);
-          if (parsed.breed) chips.push(`🐾 ${bd(parsed.breed)}`);
+          if (parsed.pet_type) {
+            const petIcon = parsed.pet_type==="dog"?t.dog:t.cat;
+            chips.push(petIcon);
+          }
+          if (parsed.breed) {
+            /* Icon matches pet_type, not breed origin */
+            const breedIcon = parsed.pet_type==="dog"?"🐕":"🐈";
+            chips.push(`${breedIcon} ${bd(parsed.breed)}`);
+          }
           if (parsed.age_category) {
             if (t.ages[parsed.age_category]) chips.push(`📅 ${t.ages[parsed.age_category]}`);
           }
@@ -936,6 +960,58 @@ export default function App() {
         }}>{t.emergencyContinue}</button>
       </div>
     );
+
+    if (step==="CONFLICT") {
+      const pending = dataRef.current._pendingConflict;
+      if (pending?.conflict) {
+        const c = pending.conflict;
+        /* Determine breed's true pet_type */
+        const breedIsDog = DOG_BREEDS.some(b => b === pending.breed) || ["진도개"].includes(pending.breed);
+        const breedIsCat = CAT_BREEDS.some(b => b === pending.breed);
+        const trueType = breedIsDog ? "dog" : breedIsCat ? "cat" : null;
+        const otherType = trueType === "dog" ? "cat" : "dog";
+        const breedName = bd(pending.breed);
+        const labelBreed = lang==="en" ? `It's a ${breedName} ${trueType}` : `${breedName} ${trueType==="dog"?"강아지":"고양이"}예요`;
+        const labelNamed = lang==="en" ? `It's a ${otherType} named ${breedName}` : `${otherType==="dog"?"강아지":"고양이"} 이름이 ${breedName}예요`;
+        return (
+          <div className="btn-row" style={{flexWrap:"wrap"}}>
+            <button className="choice-btn primary" onClick={()=>{
+              playTick();
+              addUser(labelBreed);
+              const newData = { petType: trueType, breed: pending.breed, healthConcerns: pending.concerns||[] };
+              if (pending.age_category) newData.ageCategory = pending.age_category;
+              if (pending.body_condition) newData.bodyCondition = pending.body_condition;
+              setData(p=>({...p,...newData}));
+              dataRef.current = {...dataRef.current,...newData, _pendingConflict:null};
+              const chips = [];
+              chips.push(trueType==="dog"?t.dog:t.cat);
+              chips.push(`${trueType==="dog"?"🐕":"🐈"} ${breedName}`);
+              if (pending.age_category && t.ages[pending.age_category]) chips.push(`📅 ${t.ages[pending.age_category]}`);
+              if (pending.concerns?.length) chips.push(...pending.concerns.map(cc=>cd(cc)));
+              const chipHtml = `<div class="context-chip-wrap">${chips.map(cc=>`<span class="context-chip">✓ ${cc}</span>`).join("")}</div>`;
+              const ack = lang==="en" ? `Got it, a ${breedName}!` : `${breedName}이군요!`;
+              addBot(`${ack}\n${t.parsed}${chipHtml}${t.parsedSfx}`, "CONFIRM_PARSE");
+            }}>{labelBreed}</button>
+            <button className="choice-btn ghost" onClick={()=>{
+              playTick();
+              addUser(labelNamed);
+              const newData = { petType: otherType, breed: null, healthConcerns: pending.concerns||[] };
+              if (pending.age_category) newData.ageCategory = pending.age_category;
+              if (pending.body_condition) newData.bodyCondition = pending.body_condition;
+              setData(p=>({...p,...newData}));
+              dataRef.current = {...dataRef.current,...newData, _pendingConflict:null};
+              const chips = [];
+              chips.push(otherType==="dog"?t.dog:t.cat);
+              if (pending.age_category && t.ages[pending.age_category]) chips.push(`📅 ${t.ages[pending.age_category]}`);
+              if (pending.concerns?.length) chips.push(...pending.concerns.map(cc=>cd(cc)));
+              const chipHtml = `<div class="context-chip-wrap">${chips.map(cc=>`<span class="context-chip">✓ ${cc}</span>`).join("")}</div>`;
+              const ack = lang==="en" ? "Got it!" : "알겠어요!";
+              addBot(`${ack}\n${t.parsed}${chipHtml}${t.parsedSfx}`, "CONFIRM_PARSE");
+            }}>{labelNamed}</button>
+          </div>
+        );
+      }
+    }
 
     if (step==="CONFIRM_PARSE") return (
       <div className="btn-row">

@@ -1,0 +1,66 @@
+-- v3: Direct ID-based updates (guaranteed to work)
+
+-- DOGS
+UPDATE breed_comments SET comment_en = 'Mixed breeds are known for their strong immune systems and unique personalities! Every mix is one-of-a-kind 🐾' WHERE id = 1;
+UPDATE breed_comments SET comment_en = 'Fun fact: mixed breed dogs often live longer than purebreds thanks to genetic diversity! 🧬' WHERE id = 2;
+UPDATE breed_comments SET comment_en = 'Maltese have been companion dogs for over 2,000 years — true royalty! 👑' WHERE id = 3;
+UPDATE breed_comments SET comment_en = 'Despite their tiny size, Maltese are surprisingly brave and full of energy! 💪' WHERE id = 4;
+UPDATE breed_comments SET comment_en = 'Poodles rank as one of the smartest dog breeds in the world! Big brains in a fluffy package 🧠' WHERE id = 5;
+UPDATE breed_comments SET comment_en = 'Poodles are hypoallergenic and barely shed — great for allergy-prone families! ✨' WHERE id = 6;
+UPDATE breed_comments SET comment_en = 'Shih Tzus were originally bred for Chinese royalty — they are natural lap warmers! 🏯' WHERE id = 7;
+UPDATE breed_comments SET comment_en = 'Shih Tzu means "little lion," but they are all about cuddles, not roaring! 🦁💕' WHERE id = 8;
+UPDATE breed_comments SET comment_en = 'Pomeranians descended from large sled dogs — tiny body, big dog attitude! 🐻' WHERE id = 9;
+UPDATE breed_comments SET comment_en = 'Queen Victoria owned a Pomeranian, making them a worldwide sensation! 👸' WHERE id = 10;
+UPDATE breed_comments SET comment_en = 'Chihuahuas are the smallest breed but have the biggest personalities! Fearless little warriors 🔥' WHERE id = 11;
+UPDATE breed_comments SET comment_en = 'Chihuahuas love to burrow under blankets — tiny heat-seekers! 🛏️' WHERE id = 12;
+UPDATE breed_comments SET comment_en = 'Bichon Frises are natural entertainers — they were literally circus performers! 🎪' WHERE id = 13;
+UPDATE breed_comments SET comment_en = 'That cloud-like coat is hypoallergenic! Bichons are great for sensitive owners ☁️' WHERE id = 14;
+UPDATE breed_comments SET comment_en = 'Yorkies were originally bred to catch rats in textile mills — tiny but mighty hunters! 🏭' WHERE id = 15;
+UPDATE breed_comments SET comment_en = 'A Yorkie''s silky coat is more like human hair than fur — it just keeps growing! 💇' WHERE id = 16;
+UPDATE breed_comments SET comment_en = 'Dachshunds were bred to hunt badgers — that long body was made for tunneling! 🦡' WHERE id = 17;
+UPDATE breed_comments SET comment_en = 'The famous "hot dog" name actually came from Dachshunds, not the other way around! 🌭' WHERE id = 18;
+UPDATE breed_comments SET comment_en = 'Corgis are the Queen of England''s favorite breed — true royal pups! 👑🐕' WHERE id = 19;
+UPDATE breed_comments SET comment_en = 'Despite those short legs, Corgis are herding dogs — fast, agile, and full of stamina! ⚡' WHERE id = 20;
+UPDATE breed_comments SET comment_en = 'Beagles have about 220 million scent receptors — their nose knows everything! 👃' WHERE id = 21;
+UPDATE breed_comments SET comment_en = 'Snoopy is a Beagle! One of the most beloved cartoon dogs of all time 🎨' WHERE id = 22;
+UPDATE breed_comments SET comment_en = 'Golden Retrievers are the ultimate family dogs — gentle, loyal, and always smiling! 😊' WHERE id = 23;
+UPDATE breed_comments SET comment_en = 'Goldens are top picks for therapy and guide dogs thanks to their incredible empathy 🤝' WHERE id = 24;
+UPDATE breed_comments SET comment_en = 'Labradors have been the #1 most popular dog breed in America for over 30 years! 🏆' WHERE id = 25;
+UPDATE breed_comments SET comment_en = 'Labs have webbed toes — they are natural-born swimmers! 🏊' WHERE id = 26;
+UPDATE breed_comments SET comment_en = 'Border Collies are considered THE smartest dog breed — they can learn a new command in under 5 seconds! 🧠⚡' WHERE id = 27;
+UPDATE breed_comments SET comment_en = 'A Border Collie named Chaser learned over 1,000 words — the most of any dog ever recorded! 📚' WHERE id = 28;
+UPDATE breed_comments SET comment_en = 'Huskies can run over 100 miles a day in sub-zero temperatures — ultimate endurance athletes! 🏔️' WHERE id = 29;
+UPDATE breed_comments SET comment_en = 'Huskies are famous for their dramatic "talking" — they howl, whine, and argue like no other breed! 🗣️' WHERE id = 30;
+UPDATE breed_comments SET comment_en = 'Jindos are legendary for their loyalty — one Jindo walked 180 miles to return to its owner! 🏃' WHERE id = 31;
+UPDATE breed_comments SET comment_en = 'The Jindo is a Korean national treasure — officially designated Natural Monument #53! 🇰🇷' WHERE id = 32;
+UPDATE breed_comments SET comment_en = 'Sapsalis were believed to ward off evil spirits in Korean folklore — fluffy guardian angels! 👻✨' WHERE id = 33;
+UPDATE breed_comments SET comment_en = 'The Sapsali nearly went extinct but was saved by dedicated Korean breeders in the 1980s! 🛡️' WHERE id = 34;
+UPDATE breed_comments SET comment_en = 'Every dog is special! Let''s find the perfect nutrition for your unique pup 🐕' WHERE id = 35;
+UPDATE breed_comments SET comment_en = 'No matter the breed, proper nutrition is the foundation of a happy, healthy life! 💛' WHERE id = 36;
+
+-- CATS
+UPDATE breed_comments SET comment_en = 'Mixed breed cats are wonderfully unique — no two are ever the same! 🎨' WHERE id = 37;
+UPDATE breed_comments SET comment_en = 'Mixed cats tend to be healthier thanks to genetic diversity — nature''s best design! 🧬' WHERE id = 38;
+UPDATE breed_comments SET comment_en = 'Korean Shorthairs are the most popular cats in Korea — adaptable, smart, and low-maintenance! 🇰🇷' WHERE id = 39;
+UPDATE breed_comments SET comment_en = 'Korean Shorthairs are excellent hunters with strong, athletic builds! 🏋️' WHERE id = 40;
+UPDATE breed_comments SET comment_en = 'Persians are one of the oldest cat breeds — they''ve been adored for thousands of years! 🏛️' WHERE id = 41;
+UPDATE breed_comments SET comment_en = 'Persians are the ultimate couch companions — calm, gentle, and endlessly fluffy! ☁️' WHERE id = 42;
+UPDATE breed_comments SET comment_en = 'Maine Coons are the largest domestic cat breed — some weigh over 25 pounds! They are gentle giants 🦁' WHERE id = 43;
+UPDATE breed_comments SET comment_en = 'Maine Coons love water and are known to play in their water bowls — unusual for cats! 💧' WHERE id = 44;
+UPDATE breed_comments SET comment_en = 'British Shorthairs are the teddy bears of the cat world — round face, chunky body, pure charm! 🧸' WHERE id = 45;
+UPDATE breed_comments SET comment_en = 'The Cheshire Cat from Alice in Wonderland was inspired by a British Shorthair! 😸' WHERE id = 46;
+UPDATE breed_comments SET comment_en = 'Scottish Folds get their unique folded ears from a natural genetic mutation — adorably owl-like! 🦉' WHERE id = 47;
+UPDATE breed_comments SET comment_en = 'Scottish Folds are famous for sitting in quirky "Buddha" poses — they are natural comedians! 🧘' WHERE id = 48;
+UPDATE breed_comments SET comment_en = 'Russian Blues have a unique double coat that shimmers silver in the light — living velvet! ✨' WHERE id = 49;
+UPDATE breed_comments SET comment_en = 'Russian Blues are known for their "smile" — the shape of their mouth makes them look permanently happy! 😊' WHERE id = 50;
+UPDATE breed_comments SET comment_en = 'Siamese cats are one of the most vocal breeds — they will literally have conversations with you! 🗣️' WHERE id = 51;
+UPDATE breed_comments SET comment_en = 'Siamese kittens are born completely white — their color points develop as they grow! 🎨' WHERE id = 52;
+UPDATE breed_comments SET comment_en = 'Ragdolls go completely limp when you pick them up — that is literally how they got their name! 🧸' WHERE id = 53;
+UPDATE breed_comments SET comment_en = 'Ragdolls are often called "puppy cats" because they follow their owners around the house! 🐕' WHERE id = 54;
+UPDATE breed_comments SET comment_en = 'Abyssinians are one of the oldest known cat breeds — they look like miniature mountain lions! 🦁' WHERE id = 55;
+UPDATE breed_comments SET comment_en = 'Abyssinians are incredibly active and curious — they love climbing to the highest spot in the room! 🧗' WHERE id = 56;
+UPDATE breed_comments SET comment_en = 'Every cat is unique! Let''s find the purr-fect nutrition for your feline friend 🐱' WHERE id = 57;
+UPDATE breed_comments SET comment_en = 'No matter the breed, the right nutrition makes all the difference for a happy cat! 💛' WHERE id = 58;
+
+-- Verify
+SELECT id, breed, comment_en FROM breed_comments WHERE comment_en IS NOT NULL LIMIT 5;

@@ -184,13 +184,20 @@ def _build_intent_prompt(text, is_en):
             '  "age_category": "puppy"(<1yr) or "adult"(1-7yr) or "senior7"(7-11yr) or "senior11"(11+yr) or null,\n'
             '  "body_condition": "underweight" or "normal" or "overweight" or null (detect from words like fat/chubby/skinny/thin/overweight/slim),\n'
             f'  "concerns": [use ONLY these exact Korean strings: {dog_concerns}, {cat_concerns}],\n'
-            '  "sympathy_msg": "A warm empathetic English message, 1-2 sentences. Include brief summary of the issue.",\n'
+            '  "conflict": null or {"type":"pet_breed_mismatch","detected_pet":"dog/cat","detected_breed":"breed","message":"Friendly clarification question in English"},\n'
+            '  "sympathy_msg": "A warm, conversational English response, 1-2 sentences. Sound like a knowledgeable friend, not a robot. Reference specific details they mentioned. Example: Instead of generic \'I understand your concern\', say something like \'Oh no, a 3-year-old Golden with tummy troubles — that must be worrying!\'",\n'
             '  "missing": ["pet_type","age","weight" etc.]\n'
             "}\n\n"
             "IMPORTANT: concerns must use the EXACT Korean strings from the list above. Do not translate them.\n"
             "IMPORTANT: breed must be in KOREAN.\n"
             "sympathy_msg must be in English.\n"
-            "If is_relevant is false: pet_type=null, age_category=null, concerns=[], sympathy_msg empty string"
+            "If is_relevant is false: pet_type=null, age_category=null, concerns=[], sympathy_msg empty string\n\n"
+            "CONFLICT DETECTION (critical):\n"
+            "Dog breeds: 믹스견,말티즈,푸들,시츄,포메라니안,치와와,비숑프리제,요크셔테리어,닥스훈트,웰시코기,비글,골든리트리버,래브라도,보더콜리,허스키,진돗개,삽살개\n"
+            "Cat breeds: 믹스묘,코리안숏헤어,페르시안,메인쿤,브리티시숏헤어,스코티시폴드,러시안블루,시암,랙돌,아비시니안\n"
+            'If user says a DOG breed but mentions "cat" (or vice versa), set conflict with a friendly question.\n'
+            'Example: "my jindo cat" → conflict: {"type":"pet_breed_mismatch","detected_pet":"cat","detected_breed":"진돗개","message":"Just to make sure — Jindo is a dog breed. Do you have a Jindo dog, or a cat named Jindo?"}\n'
+            "When conflict is set, still fill pet_type and breed with your best guess, but the frontend will ask for clarification."
         )
     return (
         f"보호자 메시지: \"{text}\"\n\n"
@@ -204,7 +211,8 @@ def _build_intent_prompt(text, is_en):
         '  "age_category": "puppy"(1살미만) 또는 "adult"(1~7살) 또는 "senior7"(7~11살) 또는 "senior11"(11살이상) 또는 null,\n'
         '  "body_condition": "underweight" 또는 "normal" 또는 "overweight" 또는 null (뚱뚱/살찐/마른/비만/과체중/야윈 등 체형 관련 단어 감지),\n'
         '  "concerns": ["소화기 관리","피부 건강" 등 해당 항목들],\n'
-        '  "sympathy_msg": "보호자 감정에 공감하는 따뜻한 한국어 메시지 1~2문장. 문제를 간단히 요약 포함.",\n'
+        '  "conflict": null 또는 {"type":"pet_breed_mismatch","detected_pet":"dog/cat","detected_breed":"품종명","message":"친근한 확인 질문 한국어"},\n'
+        '  "sympathy_msg": "친구처럼 자연스럽고 따뜻한 한국어 메시지 1~2문장. 보호자가 언급한 구체적 상황을 반영하세요. 예: \'아이고, 3살 골든이가 소화가 안 좋군요 😢 걱정이 많으셨겠어요.\' 같이 딱딱한 상담사가 아닌 펫 전문 친구처럼.",\n'
         '  "missing": ["pet_type","age","weight" 등 파악 못한 정보 목록]\n'
         "}\n\n"
         "나이 판단 기준: 1살 미만=puppy, 1~7살=adult, 7~11살=senior7, 11살 이상=senior11\n"
@@ -221,7 +229,13 @@ def _build_intent_prompt(text, is_en):
         "3. 보호자의 요청과 실제 상황이 모순될 때 sympathy_msg에서 부드럽게 교정해주세요.\n"
         "4. 생후 4주 미만 동물은 사료를 먹을 수 없습니다. concerns=[]로 하고 sympathy_msg에 모유/분유 안내하세요.\n"
         "\nsympathy_msg 예시: '눈물 자국 때문에 많이 속상하셨겠어요 😢 피부/모질 관리가 필요한 상황으로 보여요.'\n"
-        "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정"
+        "is_relevant가 false인 경우: pet_type=null, age_category=null, concerns=[], sympathy_msg는 빈 문자열로 설정\n\n"
+        "모순 감지 (중요):\n"
+        "강아지 품종: 믹스견,말티즈,푸들,시츄,포메라니안,치와와,비숑프리제,요크셔테리어,닥스훈트,웰시코기,비글,골든리트리버,래브라도,보더콜리,허스키,진돗개,삽살개\n"
+        "고양이 품종: 믹스묘,코리안숏헤어,페르시안,메인쿤,브리티시숏헤어,스코티시폴드,러시안블루,시암,랙돌,아비시니안\n"
+        '강아지 품종인데 "고양이"라고 했거나, 고양이 품종인데 "강아지"라고 했을 때 conflict를 설정하세요.\n'
+        '예: "우리 진돗개 고양이가" → conflict: {"type":"pet_breed_mismatch","detected_pet":"cat","detected_breed":"진돗개","message":"혹시 확인 부탁드려요 — 진돗개는 강아지 품종인데, 진돗개를 키우시나요, 아니면 고양이 이름이 진돗개인가요?"}\n'
+        "conflict가 있을 때도 pet_type과 breed는 추측값으로 채워주세요."
     )
 
 @app.post("/api/parse-intent")
@@ -232,12 +246,14 @@ async def parse_intent(req: IntentRequest):
             model="claude-sonnet-4-20250514",
             max_tokens=512,
             system=(
-                "You are a pet nutrition specialist. "
-                "Extract information from the pet owner's message and respond with empathy in English. "
+                "You are a friendly, knowledgeable AI pet nutrition specialist — like a helpful friend who knows a lot about pets. "
+                "Extract information and respond naturally. Your sympathy_msg should sound like a real conversation, not a form. "
+                "Show you understand the specific situation. Reference details they mentioned. Be warm but concise. "
                 "Respond ONLY in JSON format with no other text."
             ) if is_en else (
-                "당신은 반려동물 영양 전문 상담사입니다. "
-                "보호자의 메시지에서 정보를 파악하고 공감하는 한국어로 응답합니다. "
+                "당신은 친근하고 전문적인 AI 반려동물 영양 상담사입니다 — 펫에 대해 잘 아는 친한 친구 같은 존재입니다. "
+                "보호자의 메시지에서 정보를 파악하고, 실제 대화하듯 자연스럽게 공감합니다. "
+                "구체적인 상황에 맞게 반응하세요. 보호자가 언급한 디테일을 참조하세요. 따뜻하되 간결하게. "
                 "JSON 형식으로만 응답하고 다른 텍스트는 포함하지 마세요."
             ),
             messages=[{"role":"user","content":_build_intent_prompt(req.text, is_en)}]
