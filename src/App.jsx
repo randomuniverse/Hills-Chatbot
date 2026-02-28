@@ -1003,6 +1003,7 @@ export default function App() {
   }
 
   function handleStartRecommendBtn() {
+    playOpen();
     addUser(t.startUser);
     addBot(t.startBot, "AUTH_PROMPT", 400);
   }
