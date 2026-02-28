@@ -787,6 +787,7 @@ export default function App() {
 
   async function handleConcernsDone() {
     if (step !== "CONCERNS") return;
+    playTick();
     setStep("_PROCESSING");
 
     let finalConcerns = [...selected];
@@ -836,6 +837,7 @@ export default function App() {
 
   function handleSpecial(notes) {
     if (step !== "SPECIAL") return;
+    playTick();
     setStep("_PROCESSING");
 
     const combined = [...selectedSpecial, ...(notes&&notes.trim()?[notes.trim()]:[])];
