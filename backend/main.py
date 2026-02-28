@@ -295,23 +295,14 @@ async def classify_concerns(req: ClassifyRequest):
 async def breed_comment(req: BreedCommentRequest):
     import random
     try:
-        result = supabase.table("breed_comments").select("comment").eq("pet_type", req.pet_type).eq("breed", req.breed).execute()
+        result = supabase.table("breed_comments").select("comment, comment_en").eq("pet_type", req.pet_type).eq("breed", req.breed).execute()
         if result.data:
             chosen = random.choice(result.data)
-            comment_kr = chosen["comment"]
-            if req.lang == "en" and comment_kr:
-                try:
-                    resp = claude.messages.create(
-                        model="claude-sonnet-4-20250514",
-                        max_tokens=256,
-                        system="Translate the following Korean pet breed fun-fact into natural, friendly English. Keep the same tone and emojis. Return ONLY the translated text.",
-                        messages=[{"role":"user","content":comment_kr}]
-                    )
-                    return {"comment": resp.content[0].text.strip()}
-                except Exception as te:
-                    logger.warning(f"breed-comment translation failed: {te}")
-                    return {"comment": comment_kr}
-            return {"comment": comment_kr}
+            if req.lang == "en":
+                comment_en = chosen.get("comment_en")
+                if comment_en:
+                    return {"comment": comment_en}
+            return {"comment": chosen["comment"]}
         return {"comment": ""}
     except Exception as e:
         logger.error(f"breed-comment error: {e}")
