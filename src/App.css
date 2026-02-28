@@ -572,7 +572,13 @@ body {
 }
 
 .btn-row {
-  display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+  display: flex; gap: 6px; justify-content: center; flex-wrap: nowrap;
+}
+.btn-row .choice-btn {
+  flex-shrink: 1; min-width: 0; padding: 10px 10px;
+}
+.btn-row .choice-btn.primary {
+  padding: 14px 16px;
 }
 .btn-grid-3 {
   display: grid; grid-template-columns: repeat(3,1fr); gap: 7px;

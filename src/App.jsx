@@ -1124,7 +1124,7 @@ export default function App() {
     );
 
     if (step==="FOOD_FORM") return (
-      <div className="btn-row" style={{flexWrap:"wrap"}}>
+      <div className="btn-row">
         {["dry","wet","skip"].map(v=>(
           <button key={v} className={`choice-btn${v==="skip"?" ghost":""}`} onClick={()=>handleFoodForm(v)}>{t.foodForm[v]}</button>
         ))}
