@@ -33,7 +33,8 @@ const CONCERN_EN = {
 
 const T = {
   ko: {
-    headerSub:"힐스 펫 플래너",
+    headerTitle:"힐스 펫 플래너",
+    headerSub:"Hill's Pet Planner",
     greeting:'안녕하세요! <span class="wave">👋</span>\n반려동물 맞춤 영양사 **힐스 펫 플래너**예요.\n꼭 맞는 제품을 추천해드릴게요!',
     cta:"힐스 맞춤 제품 추천 받기", placeholder:"힐스와 상담하기",
     dog:"🐶 강아지", cat:"🐱 고양이",
@@ -95,7 +96,8 @@ const T = {
     emergencyContinue:"증상이 급하지 않아요 → 사료 추천 계속하기",
   },
   en: {
-    headerSub:"AI Pet Nutrition Advisor",
+    headerTitle:"Hill's Pet Planner",
+    headerSub:"AI PET NUTRITION ADVISOR",
     greeting:'Hello! <span class="wave">👋</span>\nI\'m the **Hill\'s Pet Planner**, your AI nutrition advisor.\nI\'ll help you find the **perfect nutrition match**!',
     cta:"Get Personalized Recommendation", placeholder:"Chat with Hill's",
     dog:"🐶 Dog", cat:"🐱 Cat",
@@ -608,6 +610,7 @@ export default function App() {
   }
 
   function startRecommend() {
+    playTick();
     addUser(t.recommendU);
     addBot(t.authPrompt, "AUTH_PROMPT", 500);
   }
@@ -958,6 +961,7 @@ export default function App() {
   }
 
   async function handleConfirm() {
+    playTick();
     addUser(t.confirmU);
     setStep("LOADING");
     startLoadingSteps(data);
@@ -1079,6 +1083,7 @@ export default function App() {
       <div className="btn-row">
         <button className="choice-btn primary" onClick={startRecommend}>{t.yesStart}</button>
         <button className="choice-btn ghost" onClick={()=>{
+          playTick();
           addUser(t.startOver);
           addBot(t.restartConfirm, "AUTH_PROMPT");
         }}>{t.startOver}</button>
@@ -1296,7 +1301,7 @@ export default function App() {
         <div className="header-inner">
           <img className="logo-icon" src="/bot-logo.png" alt="Pet Life Planner" />
           <div>
-            <div className="header-title">Hill's Pet Planner</div>
+            <div className="header-title">{t.headerTitle}</div>
             <div className="header-sub">{t.headerSub}</div>
           </div>
           <button className="header-close-btn" onClick={() => {playClose(); setTimeout(()=>setChatOpen(false), 150);}}>✕</button>
