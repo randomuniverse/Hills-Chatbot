@@ -428,7 +428,12 @@ async def recommend(req: RecommendRequest):
     if req.size != "all":
         query = query.in_("size_category", [req.size, "all"])
 
-    rows = query.execute().data or []
+    try:
+        rows = query.execute().data or []
+    except Exception as db_err:
+        logger.error(f"recommend: DB connection error: {db_err}")
+        is_en = req.lang == "en"
+        raise HTTPException(503, "Service temporarily unavailable. Please try again later." if is_en else "서비스가 일시적으로 연결되지 않습니다. 잠시 후 다시 시도해주세요.")
     INVALID_URLS = {
         "https://www.hillspet.co.kr/dog-food",
         "https://www.hillspet.co.kr/cat-food",
