@@ -1,4 +1,4 @@
-import os, json, time, logging
+import os, json, time, logging, asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -120,10 +120,24 @@ def get_concerns(pet_type):
         refresh_categories()
     return _db_categories.get(pet_type, _db_categories.get("dog", []))
 
+PING_INTERVAL = 4 * 24 * 60 * 60  # 4일마다 (7일 정지 전에 ping)
+
+async def _supabase_keepalive():
+    """Supabase 무료 플랜 자동 정지(7일) 방지용 주기적 ping."""
+    while True:
+        await asyncio.sleep(PING_INTERVAL)
+        try:
+            supabase.table("products").select("id").limit(1).execute()
+            logger.info("Supabase keepalive ping: OK")
+        except Exception as e:
+            logger.warning(f"Supabase keepalive ping failed: {e}")
+
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     refresh_categories()
     logger.info(f"Loaded categories - dog: {len(_db_categories['dog'])}, cat: {len(_db_categories['cat'])}")
+    asyncio.create_task(_supabase_keepalive())
+    logger.info("Supabase keepalive task started (ping every 4 days)")
 
 @app.get("/api/categories")
 def get_categories():
