@@ -1,0 +1,2 @@
+- [Supabase free-tier pause](supabase-pause.md) — free plan pauses after 7 days inactivity; keepalive ping added every 4 days
+- [Claude model name](claude-model.md) — correct model is claude-sonnet-4-5-20250929; old name claude-sonnet-4-20250514 returns 404
