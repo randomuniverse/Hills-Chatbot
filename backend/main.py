@@ -257,7 +257,7 @@ async def parse_intent(req: IntentRequest):
     is_en = req.lang == "en"
     try:
         resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=512,
             system=(
                 "You are a friendly, knowledgeable AI pet nutrition specialist — like a helpful friend who knows a lot about pets. "
@@ -296,7 +296,7 @@ async def classify_concerns(req: ClassifyRequest):
     is_en = getattr(req, 'lang', 'ko') == "en"
     try:
         resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=256,
             system="Pet nutrition specialist. Respond ONLY in JSON." if is_en else "반려동물 영양 전문가. JSON으로만 응답.",
             messages=[{"role":"user","content":(
@@ -380,7 +380,7 @@ async def parse_special(req: ParseSpecialRequest):
                 "약 복용 중이거나 수술 후면 vet_consult_required를 true로 설정하세요."
             )
         resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=400,
             system="Pet nutrition specialist. Respond ONLY in JSON." if is_en else "반려동물 영양 전문 상담사. JSON으로만 응답.",
             messages=[{"role":"user","content":user_prompt}]
@@ -597,7 +597,7 @@ Hills 제품 후보:
     sys_msg = "Hills Pet Nutrition official nutrition advisor. Prescription diets require vet consultation. Respond ONLY in JSON." if is_en else "Hills Pet Nutrition 공식 영양 상담사. 처방식은 수의사 상담 필수 안내. JSON으로만 응답."
     try:
         resp = claude.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5-20250929",
             max_tokens=1024,
             system=sys_msg,
             messages=[{"role":"user","content":prompt}]
