@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { trackEvent } from "./analytics";
 
 const DOG_BREEDS = ["믹스견","말티즈","푸들","시츄","포메라니안","치와와","비숑프리제","요크셔테리어","닥스훈트","웰시코기","비글","골든리트리버","래브라도","보더콜리","허스키","진돗개","삽살개","기타"];
 const CAT_BREEDS = ["믹스묘","코리안숏헤어","페르시안","메인쿤","브리티시숏헤어","스코티시폴드","러시안블루","시암","랙돌","아비시니안","기타"];
@@ -637,6 +638,7 @@ export default function App() {
   function handlePetType(type) {
     if (step !== "PET_TYPE") return;
     playTick();
+    trackEvent("pet_type_selected", { pet_type: type, language: lang });
     setStep("_PROCESSING");
     addUser(type==="dog"?t.dog:t.cat);
     const updated = {...dataRef.current, petType:type};
@@ -962,6 +964,13 @@ export default function App() {
 
   async function handleConfirm() {
     playTick();
+    trackEvent("recommendation_requested", {
+      pet_type: data.petType || "unknown",
+      life_stage: data.ageCategory || "unknown",
+      concern_count: data.healthConcerns?.length || 0,
+      has_special_notes: Boolean(data.specialNotes),
+      language: lang,
+    });
     addUser(t.confirmU);
     setStep("LOADING");
     startLoadingSteps(data);
@@ -986,8 +995,16 @@ export default function App() {
       });
       stopLoadingSteps();
       const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.detail || `Recommendation request failed (${res.status})`);
+      }
       setResults(result);
       setStep("DONE");
+      trackEvent("recommendation_completed", {
+        pet_type: data.petType || "unknown",
+        product_count: result.products?.length || 0,
+        language: lang,
+      });
       playChime();
       const reasoning = result.overall_reasoning || "";
       addBot(t.done(data.petName||t.petName, reasoning), "DONE", 600);
@@ -995,6 +1012,11 @@ export default function App() {
     } catch (err) {
       stopLoadingSteps();
       setStep("DONE");
+      trackEvent("recommendation_failed", {
+        pet_type: data.petType || "unknown",
+        error_type: err.name === "AbortError" ? "timeout" : "request_error",
+        language: lang,
+      });
       const msg = err.name === "AbortError" ? t.timeout : t.error;
       addBot(msg, "DONE", 400);
     }
@@ -1002,6 +1024,7 @@ export default function App() {
 
   function handleRestart() {
     playOpen();
+    trackEvent("recommendation_restarted", { previous_step: step, language: lang });
     setMessages([{role:"bot", text:t.greeting}]);
     setStep("START"); setData({}); setSelected([]); setSelectedSpecial([]); setShowSpecialInput(false);
     setFreeText(""); setInputVal(""); setMainInput(""); setSpecial("");
@@ -1010,6 +1033,7 @@ export default function App() {
 
   function handleStartRecommendBtn() {
     playOpen();
+    trackEvent("recommendation_started", { source: "primary_cta", language: lang });
     addUser(t.startUser);
     addBot(t.startBot, "AUTH_PROMPT", 400);
   }
@@ -1273,7 +1297,12 @@ export default function App() {
           {product.description && <div className="card-desc">{product.description}</div>}
           {product.reasoning && <div className="card-reason">{product.reasoning}</div>}
           {product.product_url && (
-            <a href={product.product_url} target="_blank" rel="noreferrer" className="card-link">
+            <a href={product.product_url} target="_blank" rel="noreferrer" className="card-link"
+              onClick={() => trackEvent("product_viewed", {
+                product_rank: index + 1,
+                pet_type: data.petType || "unknown",
+                language: lang,
+              })}>
               {t.viewHills}
             </a>
           )}
@@ -1291,7 +1320,11 @@ export default function App() {
       </div>
 
       {!chatOpen && (
-        <button className="chat-fab" onClick={() => {setChatOpen(true); playOpen();}}>
+        <button className="chat-fab" onClick={() => {
+          trackEvent("chatbot_opened", { language: lang });
+          setChatOpen(true);
+          playOpen();
+        }}>
           <img src="/bot-avatar.png" alt="chat" className="chat-fab-icon" />
         </button>
       )}
@@ -1304,7 +1337,11 @@ export default function App() {
             <div className="header-title">{t.headerTitle}</div>
             <div className="header-sub">{t.headerSub}</div>
           </div>
-          <button className="header-close-btn" onClick={() => {playClose(); setTimeout(()=>setChatOpen(false), 150);}}>✕</button>
+          <button className="header-close-btn" onClick={() => {
+            trackEvent("chatbot_closed", { step, language: lang });
+            playClose();
+            setTimeout(()=>setChatOpen(false), 150);
+          }}>✕</button>
         </div>
       </header>
 
