@@ -3,10 +3,11 @@ name: Supabase free-tier auto-pause
 description: Supabase free plan pauses project after 7 days of inactivity, removing DNS entry
 ---
 
-Supabase free tier removes the project's DNS entry after ~7 days of no API calls.
-Symptom: `[Errno -2] Name or service not known` on any DB query.
-Fix applied: asyncio background task in backend/main.py pings Supabase every 4 days.
+Supabase free tier can pause after sustained inactivity.
+Symptoms observed: `[Errno -2] Name or service not known` or HTTP 521 on DB queries.
 
-**Why:** Keepalive must run inside the deployed app process — external cron not available.
-**How to apply:** If the app is redeployed fresh, confirm the keepalive task starts on startup (`Supabase keepalive task started` in logs).
-If paused again, user must manually restore via supabase.com dashboard before the app works.
+**Rule:** Do not use an in-process sleep loop for keepalive on an Autoscale deployment. Use an external scheduler that calls the public keepalive endpoint.
+
+**Why:** Autoscale suspends the app process when there is no traffic, so an asyncio task waiting several days is destroyed before it can run.
+
+**How to apply:** The GitHub Actions workflow calls the production keepalive endpoint daily. The endpoint wakes Replit and performs a real Supabase query, returning an error if the database is unavailable. Both the app change and workflow must be published/pushed. A project already paused must still be restored manually once.
