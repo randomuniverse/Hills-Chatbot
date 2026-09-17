@@ -45,6 +45,9 @@ A chatbot-style web application that recommends Hills Pet Nutrition products bas
 ## GitHub Workflow Constraint
 - Do not modify any files under `.github/workflows/` from Replit. Replit's GitHub OAuth app lacks the `workflow` scope, so pushing commits that create or update workflow files is rejected by GitHub.
 - If a workflow schedule or configuration must change, edit and commit the workflow directly in the GitHub web editor instead.
+- Agent must not run git push or git pull. The Agent execution environment has no GitHub credentials and always fails with "Invalid username or token".
+- Git push/pull must be performed by the user in the Git pane or the workspace Shell, both of which have credentials via GIT_ASKPASS.
+- Never conclude that the repository or the user's terminal is broken based on an authentication failure inside the Agent environment. Report the environment limitation instead.
 
 ## How It Works
 1. User can either type a free-text concern or click "힐스 맞춤 제품 추천 받기"
